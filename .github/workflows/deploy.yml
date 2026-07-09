@@ -1,0 +1,46 @@
+# Авто-деплой на Cloudflare Pages при пуше в main + привязка домена <repo>.hackonvibe.com.
+# Пока в орг нет секрета CLOUDFLARE_API_TOKEN — деплой ПРОПУСКАЕТСЯ (workflow зелёный).
+# Как токен (Pages:Edit + Zone:DNS:Edit) появится как org-секрет — деплой оживает сам, без правок.
+name: Deploy to Cloudflare Pages
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  deployments: write
+env:
+  CF_ACCOUNT_ID: fa36ce8e651a803962efe3793f9c4b51
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: guard
+        env:
+          TOK: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -n "$TOK" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN не задан в секретах орг — деплой пропущен (норма до настройки токена)"
+          fi
+      - name: Deploy to Cloudflare Pages
+        if: steps.guard.outputs.ok == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: fa36ce8e651a803962efe3793f9c4b51
+          command: pages deploy . --project-name=${{ github.event.repository.name }} --branch=main
+      - name: Attach custom domain <repo>.hackonvibe.com
+        if: steps.guard.outputs.ok == 'true'
+        env:
+          TOK: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          DOMAIN="${{ github.event.repository.name }}.hackonvibe.com"
+          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${{ github.event.repository.name }}/domains" \
+            -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
+            --data "{\"name\":\"${DOMAIN}\"}" | grep -q '"success":true' \
+            && echo "::notice::домен привязан → https://$DOMAIN" \
+            || echo "::notice::домен уже привязан либо требует Zone:DNS-прав в токене"
