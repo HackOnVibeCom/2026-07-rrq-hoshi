@@ -20,6 +20,7 @@ on:
 permissions:
   contents: read
   deployments: write
+  issues: write
 env:
   CF_ACCOUNT_ID: fa36ce8e651a803962efe3793f9c4b51
   CF_ZONE_ID: 60a2c82f45b0abccf34c91e51ee91ca8
@@ -63,6 +64,7 @@ jobs:
           fi
           DEPLOY_DIR="."
           HAS_BUILD=""
+          BUILD_FAILED=""
           if [ -n "${OVERRIDE_BUILD}" ] || { [ -f "$APP_DIR/package.json" ] && grep -q '"build"[[:space:]]*:' "$APP_DIR/package.json"; }; then
             HAS_BUILD=1
           fi
@@ -87,19 +89,27 @@ jobs:
               fi
             ) 2>&1 | tee /tmp/build.log || echo "::warning::сборка упала — уйдёт честная страница с логом"
             # 2) папка выхлопа: override → первая существующая с index.html
+            FOUND=""
             if [ -n "${OVERRIDE_DIR}" ]; then
-              DEPLOY_DIR="$APP_DIR/${OVERRIDE_DIR}"
-              [ "$APP_DIR" = "." ] && DEPLOY_DIR="${OVERRIDE_DIR}"
+              D="$APP_DIR/${OVERRIDE_DIR}"; [ "$APP_DIR" = "." ] && D="${OVERRIDE_DIR}"
+              [ -f "$D/index.html" ] && { DEPLOY_DIR="$D"; FOUND=1; }
             else
               for cand in dist build out .output/public .next-export; do
                 if [ -f "$APP_DIR/$cand/index.html" ]; then
                   DEPLOY_DIR="$APP_DIR/$cand"; [ "$APP_DIR" = "." ] && DEPLOY_DIR="$cand"
-                  break
+                  FOUND=1; break
                 fi
               done
             fi
-            # 3) SPA-fallback (клиентский роутинг): нет _redirects → кладём
-            if [ "$DEPLOY_DIR" != "." ] && [ -d "$DEPLOY_DIR" ] && [ ! -f "$DEPLOY_DIR/_redirects" ]; then
+            if [ -z "$FOUND" ]; then
+              # Фреймворк-сборка НЕ дала выхлопа с index.html → ПРОВАЛ. Сырой репозиторий НЕ деплоим —
+              # готовим ЧИСТУЮ папку только под честную страницу-ошибку (её пишет след. шаг). Прогон станет
+              # КРАСНЫМ (шаг «Mark run red»). Так публичный сайт показывает «что сломалось», а не битый исходник.
+              BUILD_FAILED=1
+              DEPLOY_DIR=".hov-ci"; rm -rf "$DEPLOY_DIR"; mkdir -p "$DEPLOY_DIR"
+              echo "::warning::сборка не дала выхлопа с index.html → честная страница + красный прогон"
+            elif [ ! -f "$DEPLOY_DIR/_redirects" ]; then
+              # 3) SPA-fallback (клиентский роутинг): нет _redirects → кладём
               printf '/*    /index.html    200\n' > "$DEPLOY_DIR/_redirects"
               echo "::notice::SPA-fallback _redirects добавлен в $DEPLOY_DIR"
             fi
@@ -118,9 +128,15 @@ jobs:
               SSR=1
             fi
           fi
+          # broken=1 → на домен пойдёт честная страница (нет реального index.html в выхлопе): провал сборки
+          # ИЛИ репо без index.html вовсе. Такой прогон помечаем КРАСНЫМ (шаг «Mark run red») → робот пингует
+          # команду в Discord с ИИ-диагнозом. Для НЕ-SSR (у SSR своя судьба — Docker/туннель).
+          BROKEN=""
+          if [ "$SSR" != "1" ] && { [ -n "$BUILD_FAILED" ] || [ ! -f "$DEPLOY_DIR/index.html" ]; }; then BROKEN=1; fi
           echo "ssr=$SSR" >> "$GITHUB_OUTPUT"
+          echo "broken=$BROKEN" >> "$GITHUB_OUTPUT"
           echo "deploy_dir=$DEPLOY_DIR" >> "$GITHUB_OUTPUT"
-          echo "::notice::DEPLOY_DIR=$DEPLOY_DIR ssr=${SSR:-no}"
+          echo "::notice::DEPLOY_DIR=$DEPLOY_DIR ssr=${SSR:-no} broken=${BROKEN:-no}"
       - name: Честная главная (страница ошибки при провале сборки / без index.html)
         if: steps.guard.outputs.ok == 'true'
         env:
@@ -202,3 +218,52 @@ jobs:
               && echo "::notice::DNS CNAME создан -> ${NAME} (домен станет Active)" \
               || echo "::warning::DNS create не прошёл (нет Zone:DNS:Edit?)"
           fi
+      # ── Сборка не дала сайт → честная страница УЖЕ на домене; теперь помечаем прогон КРАСНЫМ ──
+      # Домен показывает «что сломалось» (наш файл), но прогон обязан быть красным — это сигнал команде
+      # и триггер робота (ИИ-диагноз → Discord). Сырой билд НЕ выкатывался (deploy_dir=.hov-ci).
+      - name: Mark run red if the build produced no site
+        if: steps.guard.outputs.ok == 'true' && steps.detect.outputs.broken == '1'
+        run: |
+          echo "::error::Build produced no live site — honest error page is served, marking this run as FAILED."
+          exit 1
+      # ── Провал деплоя → команда видит ошибку СРАЗУ в своём GitHub Issue ──
+      # Честная-страница покрывает только провал сборки И только когда заливка на Pages удалась. Если падает
+      # сам деплой/конфиг (напр. свой repo-secret перебил org-токен → auth 10000), на домен ничего не положить
+      # → единственный канал «увидеть сразу» = Issue в их репо. ИИ-советник (робот) дополнит рекомендациями.
+      - name: On failure — open/update a GitHub issue (team sees the error at once)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          # broken=1 → сборка не дала сайт (на домене честная страница). Иначе job упал на ДЕПЛОЕ/конфиге.
+          if [ "${{ steps.detect.outputs.broken }}" = "1" ]; then
+            STAGE="Build (compiling your project)"
+            DIAG=$'The **build failed** — it produced no site. Your live domain now shows an honest error page (not your broken code). Fix the errors in the log below and push to `main` again.'
+          else
+            STAGE="Deploy (upload to Cloudflare)"
+            DIAG=$'The **build succeeded** but the **deploy step failed**. Most common causes:\n- A repo-level secret `CLOUDFLARE_API_TOKEN` was added — it overrides the working org token and breaks auth (error 10000). Remove it in **Settings → Secrets and variables → Actions**.\n- The workflow `.github/workflows/deploy.yml` was edited (project name / account). **Do not edit it** — it is managed centrally; just push your app code.'
+          fi
+          LOG=""
+          [ -f /tmp/build.log ] && LOG="$(tail -c 3500 /tmp/build.log)"
+          BODY="$(printf '🚨 **Automatic deploy failed** — your live site was NOT updated.\n\n**Failed at:** %s\n**CI run:** %s\n\n%s\n\n<details><summary>Build log (tail)</summary>\n\n```\n%s\n```\n</details>\n\n---\nFix the cause and **push a new commit to `main`** — the deploy re-runs automatically and this issue closes itself once it succeeds.\n_(HackOnVibe CI — automatic notification)_' "$STAGE" "$RUN_URL" "$DIAG" "$LOG")"
+          TITLE="🚨 Deployment failed — action needed"
+          NUM="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search 'in:title Deployment failed' --json number,title --jq ".[] | select(.title==\"$TITLE\") | .number" | head -1)"
+          if [ -n "$NUM" ]; then
+            gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body "$BODY" && echo "::notice::обновил Issue #$NUM"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY" --label "" 2>/dev/null \
+              || gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+            echo "::notice::создал Issue о падении деплоя"
+          fi
+      - name: On success — close the failure issue if it was open
+        if: success() && steps.guard.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="🚨 Deployment failed — action needed"
+          for NUM in $(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search 'in:title Deployment failed' --json number,title --jq ".[] | select(.title==\"$TITLE\") | .number"); do
+            gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body "✅ Deploy succeeded again — your live site is updated. Closing this issue." || true
+            gh issue close "$NUM" --repo "$GITHUB_REPOSITORY" || true
+            echo "::notice::закрыл Issue #$NUM (деплой снова зелёный)"
+          done
