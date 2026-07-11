@@ -1,15 +1,13 @@
 # Авто-деплой на Cloudflare Pages при пуше в main.
-# Цель деплоя = vars.CF_PROJECT_NAME (если задан), иначе имя репо. Пока в орг нет секрета
-# CLOUDFLARE_API_TOKEN — деплой ПРОПУСКАЕТСЯ (workflow зелёный). Токен (Pages:Edit + Zone:DNS:Edit) как
-# org-секрет → деплой оживает: сборка(опц.) → заливка → привязка домена → DNS CNAME → домен Active.
+# Цель = vars.CF_PROJECT_NAME или имя репо. Нет org-секрета CLOUDFLARE_API_TOKEN → деплой пропускается.
+# Токен (Pages:Edit + Zone:DNS:Edit) → сборка(опц.) → заливка → домен → DNS CNAME → домен Active.
 #
-# ФРЕЙМВОРК-СБОРКА (опционально, класс Vite/CRA/Astro/Next-export): задай repo-переменные
-#   vars.BUILD_CMD   — команда сборки, напр. "npm ci && npm run build"
-#   vars.DEPLOY_DIR  — папка выхлопа для заливки, напр. "dist" / "out" / "build"
-# Заданы → CI ставит Node, билдит и деплоит DEPLOY_DIR. Не заданы → как раньше: pages deploy .
-# (repo-переменные ставит ТОЛЬКО owner — у коллабораторов-участников прав нет; билд-скрипт команды
-#  токена НЕ получает). SSR-фреймворки (Next.js по умолчанию + сервер) статикой не поднять — хостить
-#  на Vercel и линковать (см. docs/dev/github-org-cicd.md).
+# ФРЕЙМВОРК-СБОРКА (опц., класс Vite/CRA/Astro/Next-export): repo-vars BUILD_CMD + DEPLOY_DIR.
+# Заданы → CI ставит Node, билдит, деплоит DEPLOY_DIR. Не заданы → pages deploy . (repo-vars ставит
+# только owner; билд-скрипт токена НЕ получает). SSR (Next.js Node-рантайм) — на Vercel.
+#
+# ЧЕСТНАЯ ГЛАВНАЯ: если сборка упала ИЛИ в выхлопе нет index.html — CI кладёт информативную страницу с
+# логом ошибки вместо пустого 404 / призрака Always Online. Мёртвый деплой виден и объясняет себя.
 name: Deploy to Cloudflare Pages
 on:
   push:
@@ -45,21 +43,50 @@ jobs:
           node-version: "20"
       - name: Build фреймворка (только если задан BUILD_CMD)
         if: steps.guard.outputs.ok == 'true' && vars.BUILD_CMD != ''
-        # ВАЖНО: тут НЕТ токена в env — билд-скрипт команды не должен иметь доступ к секрету.
+        # Токена тут НЕТ в env. Сборку НЕ валим — если упала, ниже деплоим страницу с ошибкой.
         env:
           BUILD_CMD: ${{ vars.BUILD_CMD }}
         run: |
           echo "::notice::сборка команды: $BUILD_CMD → выхлоп в '${DEPLOY_DIR}'"
-          eval "$BUILD_CMD"
+          set -o pipefail
+          if eval "$BUILD_CMD" 2>&1 | tee /tmp/build.log; then
+            echo "::notice::сборка успешна"
+          else
+            echo "::warning::сборка упала — на главную уйдёт страница с ошибкой (см. след. шаг)"
+          fi
+      - name: Честная главная (страница ошибки при провале сборки / без index.html)
+        if: steps.guard.outputs.ok == 'true'
+        run: |
+          mkdir -p "$DEPLOY_DIR"
+          if [ -f "$DEPLOY_DIR/index.html" ]; then
+            echo "::notice::index.html есть в ${DEPLOY_DIR} — деплоим сайт как есть"
+          else
+            echo "::warning::в ${DEPLOY_DIR} нет index.html → деплою информативную страницу вместо 404/призрака"
+            LOG=""
+            [ -f /tmp/build.log ] && LOG="$(tail -c 6000 /tmp/build.log | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')"
+            {
+              printf '%s' '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Build failed — HackOnVibe</title>'
+              printf '%s' '<style>body{font:16px/1.6 system-ui,sans-serif;max-width:56rem;margin:3rem auto;padding:0 1.2rem;color:#222}h1{color:#c0392b}code{background:#f0f0f0;padding:2px 6px;border-radius:5px}pre{background:#0d1117;color:#e6edf3;padding:1rem;border-radius:10px;overflow:auto;white-space:pre-wrap;font-size:13px}</style></head><body>'
+              printf '%s' '<h1>⚠️ Build did not produce a live site</h1>'
+              printf '<p>This team repo has no <code>index.html</code> in its publish directory <code>%s</code>, so there is nothing to serve.</p>' "$DEPLOY_DIR"
+              if [ -n "$LOG" ]; then
+                printf '%s' '<p>The build command <b>failed</b>. Fix the errors below and push to <code>main</code> again.</p><h3>Build log (last lines):</h3><pre>'
+                printf '%s' "$LOG"
+                printf '%s' '</pre>'
+              else
+                printf '%s' '<p>No build was configured. If this is a framework (Vite/CRA/Astro/Next with <code>output:"export"</code>), ask the organizers to set repo variables <code>BUILD_CMD</code> and <code>DEPLOY_DIR</code>. If your app needs a Node.js server (Next.js SSR, API routes), host it on <b>Vercel</b> (native Next.js) — Cloudflare Pages runs static/edge only.</p>'
+              fi
+              printf '%s' '<p style="color:#888;margin-top:2rem;font-size:13px">HackOnVibe CI — this page auto-replaces a broken deploy so you can see exactly what went wrong.</p></body></html>'
+            } > "$DEPLOY_DIR/index.html"
+          fi
       - name: Отключаем edge-кэш (хакатон — правки видны сразу)
         if: steps.guard.outputs.ok == 'true'
         run: |
-          # _headers пишем в DEPLOY_DIR (после сборки), чтобы Pages его подхватил. no-store -> edge не кэширует.
           if [ ! -f "${DEPLOY_DIR}/_headers" ]; then
             printf '/*\n  Cache-Control: no-store\n' > "${DEPLOY_DIR}/_headers"
-            echo "::notice::_headers (Cache-Control: no-store) добавлен в ${DEPLOY_DIR} — edge-кэш выключен"
+            echo "::notice::_headers (no-store) добавлен в ${DEPLOY_DIR} — edge-кэш выключен"
           else
-            echo "::notice::_headers уже есть в ${DEPLOY_DIR} — не трогаю (уважаем настройку команды)"
+            echo "::notice::_headers уже есть в ${DEPLOY_DIR} — не трогаю"
           fi
       - name: Deploy to Cloudflare Pages
         if: steps.guard.outputs.ok == 'true'
@@ -84,8 +111,6 @@ jobs:
         env:
           TOK: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          # Без DNS-записи домен висит в статусе pending. Создаём CNAME <project> -> <project>.pages.dev
-          # в зоне hackonvibe.com (нужен Zone:DNS:Edit в токене). Идемпотентно: повтор -> "уже существует".
           curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${CF_ZONE_ID}/dns_records" \
             -H "Authorization: Bearer $TOK" -H "Content-Type: application/json" \
             --data "{\"type\":\"CNAME\",\"name\":\"${CF_PROJECT}\",\"content\":\"${CF_PROJECT}.pages.dev\",\"proxied\":true}" \
