@@ -1,9 +1,31 @@
+import { Navbar } from "@/components/landing/Navbar";
+import { Hero } from "@/components/landing/Hero";
+import { ProblemAgitation } from "@/components/landing/ProblemAgitation";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { ValuePillars } from "@/components/landing/ValuePillars";
+import { FeatureDeepDive } from "@/components/landing/FeatureDeepDive";
+import { LiveDemoWidget } from "@/components/landing/LiveDemoWidget";
+import { Pricing } from "@/components/landing/Pricing";
+import { FeatureReference } from "@/components/landing/FeatureReference";
+import { FAQ } from "@/components/landing/FAQ";
+import { Footer } from "@/components/landing/Footer";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold text-center">
-        Undercut MVP - Next.js CI/CD Test
-      </h1>
-    </main>
+    <>
+      <Navbar />
+      <main>
+        <Hero />
+        <ProblemAgitation />
+        <HowItWorks />
+        <ValuePillars />
+        <FeatureDeepDive />
+        <LiveDemoWidget />
+        <Pricing />
+        <FeatureReference />
+        <FAQ />
+      </main>
+      <Footer />
+    </>
   );
 }

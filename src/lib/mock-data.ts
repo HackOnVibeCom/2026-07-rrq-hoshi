@@ -1,0 +1,272 @@
+import type {
+  BillingEntry,
+  Competitor,
+  Lead,
+  Profile,
+  Transaction,
+} from "@/lib/types";
+
+export const MOCK_PROFILE: Profile = {
+  id: "mock-profile-1",
+  email: "founder@myapp.io",
+  app_name: "MyApp",
+  app_description:
+    "Offline-first notes app with autosave every keystroke and instant sync across devices. Built for people who lost work to flaky cloud tools.",
+  app_url: "https://myapp.io",
+  app_category: "Productivity",
+  target_audience:
+    "Indie developers, writers, and students who need reliable note-taking on flaky internet connections.",
+  tone_of_voice: "friendly",
+  onboarding_completed: true,
+  differentiators: {
+    differentiator_1: "Autosave every keystroke — never lose a draft",
+    differentiator_2: "Offline-first, syncs when you reconnect",
+    differentiator_3: "$9/mo flat, no ads, no upsell treadmill",
+  },
+  image_placeholder_url: "https://via.placeholder.com/400x600.png?text=App+UI+Preview",
+  company_name: "Solo Studio",
+  credit_balance: 2.0,
+  free_demo_credits_remaining: 3,
+  free_demo_reset_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+  created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+};
+
+export const MOCK_COMPETITORS: Competitor[] = [
+  {
+    id: "comp-1",
+    profile_id: "mock-profile-1",
+    competitor_name: "CompetitorApp",
+    platform: "X",
+    search_query: "@CompetitorApp lambat OR #CompetitorFail",
+    is_active: true,
+    created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "comp-2",
+    profile_id: "mock-profile-1",
+    competitor_name: "Notion",
+    platform: "X",
+    search_query: "@NotionHQ slow OR #NotionDown OR lost notes",
+    is_active: true,
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "comp-3",
+    profile_id: "mock-profile-1",
+    competitor_name: "Tokopedia",
+    platform: "INSTAGRAM",
+    search_query: "tokopedia",
+    is_active: true,
+    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "comp-4",
+    profile_id: "mock-profile-1",
+    competitor_name: "Gojek",
+    platform: "INSTAGRAM",
+    search_query: "gojek.official",
+    is_active: false,
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+const now = Date.now();
+const min = 60 * 1000;
+const hr = 60 * min;
+const day = 24 * hr;
+
+export const MOCK_LEADS: Lead[] = [
+  {
+    id: "lead-1",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-1",
+    platform: "X",
+    external_post_id: "1837562819552",
+    author_username: "frust_dev",
+    raw_content:
+      "Used @CompetitorApp for 2 years but the sync is broken AGAIN. Lost a whole week of notes. Looking for an alternative tbh, can't keep doing this.",
+    post_url: "https://twitter.com/frust_dev/status/1837562819552",
+    gate_1_passed: true,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply:
+      "Ugh, losing notes is the worst 😩 I built MyApp with offline-first sync so drafts never disappear — even on flaky wifi. Free trial if you wanna swap 👇",
+    gate_2_model_used: "deepseek-chat",
+    status: "PENDING",
+    processing_time_ms: 41200,
+    created_at: new Date(now - 8 * min).toISOString(),
+  },
+  {
+    id: "lead-2",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-1",
+    platform: "X",
+    external_post_id: "1837552819551",
+    author_username: "marketingguy",
+    raw_content:
+      "Why is @CompetitorApp charging $40/mo now and STILL showing ads? This is getting ridiculous 🤦 Honestly switching the minute I find something better.",
+    post_url: "https://twitter.com/marketingguy/status/1837552819551",
+    gate_1_passed: true,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply:
+      "Right?? Paying AND getting ads is rough. MyApp is $9/mo, zero ads, no upsell treadmill. First month free if you DM me 🙌",
+    gate_2_model_used: "deepseek-chat",
+    status: "PENDING",
+    processing_time_ms: 38900,
+    created_at: new Date(now - 32 * min).toISOString(),
+  },
+  {
+    id: "lead-3",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-2",
+    platform: "X",
+    external_post_id: "1837542819550",
+    author_username: "startup_founder",
+    raw_content:
+      "@NotionHQ customer support hasn't replied in 5 days. FIVE DAYS. Anyone know a tool that actually answers tickets?",
+    post_url: "https://twitter.com/startup_founder/status/1837542819550",
+    gate_1_passed: true,
+    gate_1_model_used: "google/gemma-4-31b-it:free",
+    gate_2_generated_reply:
+      "Heard you — 5 days is unacceptable. MyApp has 24h SLA on every plan, even free. We answer tickets ourselves, no bots. Want a test account?",
+    gate_2_model_used: "deepseek-chat",
+    status: "PENDING",
+    processing_time_ms: 52300,
+    created_at: new Date(now - 2 * hr).toISOString(),
+  },
+  {
+    id: "lead-4",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-3",
+    platform: "INSTAGRAM",
+    external_post_id: "ig-post-9248",
+    author_username: "annoyed_user_42",
+    raw_content:
+      "@tokopedia your app literally won't let me checkout, error every single time. Is anyone working there actually trying to fix it??",
+    post_url: "https://instagram.com/p/DkBc9x23/",
+    gate_1_passed: true,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply:
+      "Ouch, that's painful checkout pain right there. MyApp streamlines checkout in 2 taps, no errors guaranteed. Free trial today — link in bio!",
+    gate_2_model_used: "deepseek-chat",
+    status: "PENDING",
+    processing_time_ms: 44000,
+    created_at: new Date(now - 4 * hr).toISOString(),
+  },
+  {
+    id: "lead-5",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-3",
+    platform: "INSTAGRAM",
+    external_post_id: "ig-post-9247",
+    author_username: "tennisfan_jakarta",
+    raw_content:
+      "@tokopedia order stuck for 3 days. Customer service just keeps sending automated replies. Anyone got a working alternative?",
+    post_url: "https://instagram.com/p/DkAa1p08/",
+    gate_1_passed: true,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply:
+      "Auto replies at checkout pain are the worst 😩 MyApp ships in 1 day with real human support. Free trial — link in bio!",
+    gate_2_model_used: "deepseek-chat",
+    status: "PENDING",
+    processing_time_ms: 39800,
+    created_at: new Date(now - 6 * hr).toISOString(),
+  },
+  {
+    id: "lead-6",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-1",
+    platform: "X",
+    external_post_id: "1837512819546",
+    author_username: "designsby_lila",
+    raw_content:
+      "@CompetitorApp crashed mid-presentation. Literally lost the canvas I designed for 3 hours. Rage-quitting.",
+    post_url: "https://twitter.com/designsby_lila/status/1837512819546",
+    gate_1_passed: true,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply:
+      "Losing 3 hours of work is soul-crushing. MyApp autosaves every keystroke + offline-first so even crashes don't lose you. Free trial 👇",
+    gate_2_model_used: "deepseek-chat",
+    status: "REPLIED",
+    processing_time_ms: 33100,
+    created_at: new Date(now - 1 * day).toISOString(),
+  },
+  {
+    id: "lead-7",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-1",
+    platform: "X",
+    external_post_id: "1837502819545",
+    author_username: "tech_reviewer_daily",
+    raw_content:
+      "Review: @CompetitorApp is great, but the customer support is the worst I've ever experienced. 14 days no response.",
+    post_url: "https://twitter.com/tech_reviewer_daily/status/1837502819545",
+    gate_1_passed: false,
+    gate_1_model_used: "nvidia/nemotron-3-super-120b-a12b:free",
+    gate_2_generated_reply: null,
+    gate_2_model_used: null,
+    status: "REJECTED",
+    processing_time_ms: 8200,
+    created_at: new Date(now - 2 * day).toISOString(),
+  },
+  {
+    id: "lead-8",
+    profile_id: "mock-profile-1",
+    competitor_target_id: "comp-3",
+    platform: "INSTAGRAM",
+    external_post_id: "ig-post-9232",
+    author_username: "smallbiz_jakarta",
+    raw_content:
+      "@tokopedia the new UI update is confusing. Where did my order history go? How does this ship past QA?",
+    post_url: "https://instagram.com/p/Dk2Tt12/",
+    gate_1_passed: true,
+    gate_1_model_used: "google/gemma-4-31b-it:free",
+    gate_2_generated_reply:
+      "Confusing UI updates are frustrating. MyApp keeps order history visible always + clean UI. Try free today — link in bio!",
+    gate_2_model_used: "deepseek-chat",
+    status: "REPLIED",
+    processing_time_ms: 41500,
+    created_at: new Date(now - 3 * day).toISOString(),
+  },
+];
+
+export const MOCK_LEDGER: BillingEntry[] = [
+  {
+    id: "led-1",
+    profile_id: "mock-profile-1",
+    lead_id: "lead-6",
+    amount_usd: 0,
+    transaction_type: "FREE_DEMO",
+    created_at: new Date(now - 1 * day).toISOString(),
+  },
+  {
+    id: "led-2",
+    profile_id: "mock-profile-1",
+    lead_id: "lead-8",
+    amount_usd: 0,
+    transaction_type: "FREE_DEMO",
+    created_at: new Date(now - 3 * day).toISOString(),
+  },
+  {
+    id: "led-3",
+    profile_id: "mock-profile-1",
+    lead_id: null,
+    amount_usd: 2.0,
+    transaction_type: "TOPUP",
+    created_at: new Date(now - 7 * day).toISOString(),
+  },
+];
+
+export const MOCK_TRANSACTIONS: Transaction[] = [
+  {
+    id: "tx-1",
+    profile_id: "mock-profile-1",
+    gateway: "midtrans",
+    gateway_order_id: "undercut-1083745",
+    top_up_amount_usd: 2.0,
+    credit_granted_usd: 2.0,
+    amount_idr: 32000,
+    status: "SETTLED",
+    paid_at: new Date(now - 7 * day).toISOString(),
+    created_at: new Date(now - 7 * day).toISOString(),
+  },
+];
