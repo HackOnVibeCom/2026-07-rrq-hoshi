@@ -30,6 +30,17 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CLOUDFLARE_API_TOKEN не задан в секретах орг — деплой пропущен (норма до настройки токена)"
           fi
+      - name: Отключаем edge-кэш (хакатон — правки видны сразу)
+        if: steps.guard.outputs.ok == 'true'
+        run: |
+          # Cloudflare Pages читает _headers. no-store на всё -> edge НЕ кэширует, изменения видны мгновенно.
+          # Не перетираем свой _headers команды, если он уже есть.
+          if [ ! -f _headers ]; then
+            printf '/*\n  Cache-Control: no-store\n' > _headers
+            echo "::notice::_headers (Cache-Control: no-store) добавлен — edge-кэш выключен"
+          else
+            echo "::notice::_headers уже есть в репо — не трогаю (уважаем настройку команды)"
+          fi
       - name: Deploy to Cloudflare Pages
         if: steps.guard.outputs.ok == 'true'
         uses: cloudflare/wrangler-action@v3
