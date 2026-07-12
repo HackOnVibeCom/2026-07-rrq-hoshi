@@ -9,13 +9,19 @@
 </p>
 
 <p align="center">
-  <a href="https://undercut.app">Website</a> ·
+  <a href="https://undercut-sigma.vercel.app/">Website</a> ·
   <a href="#getting-started">Getting Started</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#deployment">Deployment</a>
 </p>
 
 ---
+
+> [!IMPORTANT]
+> **Deployment Note**: The auto-generated website integrated with this repository's default CI/CD pipeline will fail to run correctly because it requires manual environment setup (API keys for Supabase, Stripe, OpenRouter, RapidAPI, etc.). 
+>
+> Therefore, we have fully deployed the working application to our own hosted environment:
+> **👉 Live Demo: [https://undercut-sigma.vercel.app](https://undercut-sigma.vercel.app/)**
 
 ## 🚀 HackOnVibe Hackathon Submission
 
@@ -405,5 +411,5 @@ This project is proprietary software. All rights reserved.
 ---
 
 <p align="center">
-  <a href="https://undercut.app"><strong>https://undercut.app</strong></a>
+  <a href="https://undercut-sigma.vercel.app/"><strong>https://undercut-sigma.vercel.app/</strong></a>
 </p>
