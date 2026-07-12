@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Send, Edit3, Check, X, Timer, ArrowUpRight, Loader2, MessageSquarePlus } from "lucide-react";
+import { Send, Edit3, Check, X, Timer, ArrowUpRight, Loader2, MessageSquarePlus, Trash2 } from "lucide-react";
 import { XIcon, InstagramIcon } from "@/components/ui/BrandIcons";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { markLeadReplied, updateLeadDraft, generateLeadReply, getProfile } from "@/lib/data";
+import { markLeadReplied, updateLeadDraft, generateLeadReply, getProfile, deleteLead } from "@/lib/data";
 import type { Lead } from "@/lib/types";
 
 const COACHMARK_KEY = "undercut:coachmark-seen";
@@ -70,8 +70,15 @@ export function LeadCard({
       setDraft(updated.gate_2_generated_reply ?? "");
       setProcessingTime(updated.processing_time_ms);
       toast.success("Draft reply generated! 1 cycle deducted.");
-    } catch (err: any) {
-      toast.error("Insufficient balance. Please top up your cycles!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "unknown";
+      if (msg === "PENDING_PAYMENT") {
+        toast.error("Insufficient balance. Top up to continue!");
+      } else if (msg === "REJECTED") {
+        toast.error("This post didn't pass AI relevance check.");
+      } else {
+        toast.error("Draft generation failed. Please try again.");
+      }
     } finally {
       setGenerating(false);
     }
@@ -82,8 +89,9 @@ export function LeadCard({
     setReplying(true);
 
     if (isX) {
+      const numericId = lead.external_post_id.replace(/^x_/, "");
       const url =
-        `https://twitter.com/intent/tweet?in_reply_to=${lead.external_post_id}` +
+        `https://x.com/intent/tweet?in_reply_to=${numericId}` +
         `&text=${encodeURIComponent(draft)}`;
       window.open(url, "_blank", "noopener,noreferrer");
     } else {
@@ -107,6 +115,27 @@ export function LeadCard({
     setGeneratedReply(draft);
     setEditing(false);
     toast.success("Draft updated");
+  };
+
+  const handleDeleteLead = async () => {
+    try {
+      await deleteLead(lead.id);
+      toast.success("Lead dismissed");
+      onReplied(lead.id); // client-side UI removal
+    } catch {
+      toast.error("Failed to dismiss lead");
+    }
+  };
+
+  const handleDeleteDraft = async () => {
+    try {
+      await updateLeadDraft(lead.id, "");
+      setGeneratedReply(null);
+      setDraft("");
+      toast.success("AI draft cleared");
+    } catch {
+      toast.error("Failed to clear draft");
+    }
   };
 
   const wordOverflow = draft.length > charLimit;
@@ -140,7 +169,7 @@ export function LeadCard({
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Left Column: 3D Twitter Post Card */}
-        <div className="rounded-3xl border border-border border-b-[3.5px] border-b-accent/40 bg-surface p-6 shadow-[0_12px_24px_rgba(0,0,0,0.4),_inset_0_1.5px_0_rgba(255,255,255,0.06)] hover:border-accent/30 transition-all duration-300 flex flex-col justify-between min-h-[300px]">
+        <div className="rounded-3xl border border-border border-b-[3.5px] border-b-accent/40 bg-surface p-4 sm:p-6 shadow-[0_12px_24px_rgba(0,0,0,0.4),_inset_0_1.5px_0_rgba(255,255,255,0.06)] hover:border-accent/30 transition-all duration-300 flex flex-col justify-between min-h-[300px]">
           <div>
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
@@ -148,9 +177,15 @@ export function LeadCard({
                 {/* Avatar */}
                 <div className="relative h-11 w-11 overflow-hidden rounded-full border border-border/40">
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.author_username)}&background=1d9bf0&color=fff`}
+                    src={
+                      lead.author_avatar_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.author_username)}&background=1d9bf0&color=fff`
+                    }
                     alt={lead.author_username}
                     className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(lead.author_username)}&background=1d9bf0&color=fff`
+                    }}
                   />
                 </div>
                 {/* Identity */}
@@ -162,7 +197,15 @@ export function LeadCard({
                   <span className="text-xs text-muted leading-tight mt-0.5">@{lead.author_username}</span>
                 </div>
               </div>
-              <div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDeleteLead}
+                  title="Dismiss lead"
+                  className="rounded-lg p-1.5 text-muted hover:bg-danger/10 hover:text-danger transition-colors"
+                  aria-label="Dismiss lead"
+                >
+                  <Trash2 size={14} />
+                </button>
                 <PlatformIcon className="h-5 w-5 text-muted/60" />
               </div>
             </div>
@@ -230,7 +273,7 @@ export function LeadCard({
         </div>
 
         {/* Right Column: 3D AI Reply Card */}
-        <div className="rounded-3xl border border-border border-b-[3.5px] border-b-success/40 bg-surface p-6 shadow-[0_12px_24px_rgba(0,0,0,0.4),_inset_0_1.5px_0_rgba(255,255,255,0.06)] hover:border-success/30 transition-all duration-300 flex flex-col justify-between min-h-[300px]">
+        <div className="rounded-3xl border border-border border-b-[3.5px] border-b-success/40 bg-surface p-4 sm:p-6 shadow-[0_12px_24px_rgba(0,0,0,0.4),_inset_0_1.5px_0_rgba(255,255,255,0.06)] hover:border-success/30 transition-all duration-300 flex flex-col justify-between min-h-[300px]">
           {!generatedReply ? (
             /* Case 1: Reply not generated yet */
             <div className="flex flex-col items-center justify-center flex-1 py-4 text-center h-full">
@@ -283,7 +326,17 @@ export function LeadCard({
                       <span className="text-xs text-muted leading-tight mt-0.5">@undercut</span>
                     </div>
                   </div>
-                  <div>
+                  <div className="flex items-center gap-2">
+                    {!editing && (
+                      <button
+                        onClick={handleDeleteDraft}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] text-danger hover:bg-danger/10 transition-colors border border-danger/20"
+                        aria-label="Clear draft"
+                      >
+                        <Trash2 size={10} />
+                        Clear Draft
+                      </button>
+                    )}
                     <button
                       onClick={() => setEditing((p) => !p)}
                       className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] text-muted transition-colors hover:bg-surface-2 hover:text-text border border-border"

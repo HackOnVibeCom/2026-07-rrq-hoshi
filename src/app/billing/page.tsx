@@ -223,7 +223,7 @@ export default function BillingView() {
             ))}
           </div>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-border">
+          <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border bg-surface-2 text-xs uppercase tracking-wider text-muted">
                 <tr>

@@ -46,8 +46,6 @@ export default function DashboardLayoutShell({
   return (
     <div className="flex min-h-screen bg-bg">
       <Sidebar xPending={xPending} igPending={igPending} />
-      <MobileTabBar xPending={xPending} igPending={igPending} />
-
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-bg/80 px-4 backdrop-blur-lg sm:px-6">
           <button
@@ -64,6 +62,8 @@ export default function DashboardLayoutShell({
             <CreditWidget onTopUp={() => setTopUpOpen(true)} />
           </div>
         </header>
+
+        <MobileTabBar xPending={xPending} igPending={igPending} />
 
         <main className="flex-1 px-4 pb-24 pt-4 sm:px-6 md:pb-8 md:pt-8">
           <div className="mx-auto max-w-5xl">

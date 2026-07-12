@@ -8,6 +8,9 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
 import { XIcon } from "@/components/ui/BrandIcons";
 import { useAuthModal } from "@/components/AuthModalProvider";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 const EXAMPLES = [
   {
@@ -238,10 +241,29 @@ function TweetCard({
 }
 
 export function LiveDemoWidget() {
+  const router = useRouter();
+  const supabase = createClient();
   const { open } = useAuthModal();
+  const [user, setUser] = useState<User | null>(null);
   const [index, setIndex] = useState(0);
   const example = EXAMPLES[index];
   const next = () => setIndex((p) => (p + 1) % EXAMPLES.length);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    getSession();
+  }, [supabase]);
+
+  const handleStartFree = () => {
+    if (user) {
+      router.push("/dashboard/x");
+    } else {
+      open();
+    }
+  };
 
   return (
     <Container className="py-20 sm:py-28">
@@ -302,7 +324,7 @@ export function LiveDemoWidget() {
         </div>
 
         <div className="mt-12 text-center">
-          <Button variant="primary" size="lg" onClick={open}>
+          <Button variant="primary" size="lg" onClick={handleStartFree}>
             This could be your reply. Try it free
             <ArrowRight size={18} />
           </Button>

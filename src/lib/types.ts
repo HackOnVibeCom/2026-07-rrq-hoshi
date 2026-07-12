@@ -63,6 +63,7 @@ export interface Lead {
   platform: Platform;
   external_post_id: string;
   author_username: string;
+  author_avatar_url: string | null;
   raw_content: string;
   post_url: string;
   gate_1_passed: boolean;

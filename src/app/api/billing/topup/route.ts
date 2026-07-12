@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
+import { createServiceRoleClient } from '@/utils/supabase/service-role'
 import { stripe } from '@/lib/stripe'
 
 export async function POST(request: Request) {
@@ -40,8 +41,9 @@ export async function POST(request: Request) {
 
     const gatewayOrderId = `undercut-topup-${user.id.substring(0, 8)}-${Date.now()}`
 
-    // 5. Save pending transaction in Supabase
-    const { error: dbError } = await supabase
+    // 5. Save pending transaction in Supabase (use Service Role client to bypass RLS)
+    const admin = createServiceRoleClient()
+    const { error: dbError } = await admin
       .from('payment_transactions')
       .insert({
         profile_id: user.id,
@@ -61,7 +63,6 @@ export async function POST(request: Request) {
     // 6. Create Stripe Checkout Session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
@@ -93,8 +94,9 @@ export async function POST(request: Request) {
       url: session.url,
       order_id: gatewayOrderId,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Stripe payment token request failed:', error)
-    return NextResponse.json({ error: error?.message || 'Payment initiation failed' }, { status: 500 })
+    const errMsg = error instanceof Error ? error.message : 'Payment initiation failed'
+    return NextResponse.json({ error: errMsg }, { status: 500 })
   }
 }

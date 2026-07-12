@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
-import { Radar, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Radar, RefreshCw, Sparkles } from "lucide-react";
 import { LeadCard } from "@/components/dashboard/LeadCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import { listLeads } from "@/lib/data";
+import { listLeads, triggerScrape } from "@/lib/data";
+import { createClient } from "@/utils/supabase/client";
 import type { Lead, Platform } from "@/lib/types";
 
 const COACHMARK_KEY = "undercut:coachmark-seen";
@@ -15,42 +16,143 @@ const COACHMARK_KEY = "undercut:coachmark-seen";
 export function LeadQueue({ platform }: { platform: Platform }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scraping, setScraping] = useState(false);
   const [showCoachmark, setShowCoachmark] = useState(false);
   const toast = useToast();
+  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
+  // Track whether a manual scrape is in progress to suppress per-lead Realtime toasts
+  const scrapingRef = useRef(false);
 
   const fetchLeads = useCallback(async () => {
-    setLoading(true);
     try {
       const data = await listLeads(platform, "PENDING");
-      setLeads((prev) => {
-        // Detect new leads via realtime stub (diff by id)
-        if (prev.length > 0 && data.length > prev.length) {
-          const prevIds = new Set(prev.map((l) => l.id));
-          const newcomers = data.filter((l) => !prevIds.has(l.id));
-          if (newcomers.length > 0) {
-            toast.success(`New leads found! (${newcomers.length})`);
-          }
-        }
-        return data;
-      });
+      setLeads(data);
+    } catch (err) {
+      console.error("[LeadQueue] fetchLeads error:", err);
     } finally {
       setLoading(false);
     }
-  }, [platform, toast]);
+  }, [platform]);
 
+  // Wait for React to commit state + browser to paint before showing a toast
+  const afterPaint = () =>
+    new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+
+  // Initial fetch + auto-scrape on first load if no leads
   useEffect(() => {
-    fetchLeads();
+    setLoading(true);
     setShowCoachmark(
       typeof window !== "undefined" && !localStorage.getItem(COACHMARK_KEY)
     );
-    // Poll every 30s as realtime stub (see PRD §G.11 tahap 5).
-    const interval = setInterval(fetchLeads, 30000);
-    return () => clearInterval(interval);
-  }, [fetchLeads]);
+
+    fetchLeads().then(async () => {
+      // Auto-scrape: try on first load (throttle handles 10x/day limit)
+      try {
+        const result = await triggerScrape({ platform, force: false });
+        if (result.inserted && result.inserted > 0) {
+          await fetchLeads();
+          await afterPaint();
+          toast.success(`Found ${result.inserted} new leads!`);
+        }
+      } catch {
+        // Scrape errors are non-fatal — user can retry manually
+      }
+    });
+  }, [platform]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Supabase Realtime — subscribe to new leads for this platform
+  useEffect(() => {
+    const supabase = createClient();
+
+    // Clean up previous channel if platform changes
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channel = supabase
+      .channel(`leads-${platform}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "leads_queue",
+          filter: `platform=eq.${platform}`,
+        },
+        (payload) => {
+          const newLead = payload.new as Lead;
+          // Only add if it's in a showable state
+          if (["PENDING", "PENDING_PAYMENT"].includes(newLead.status)) {
+            setLeads((prev) => {
+              if (prev.some((l) => l.id === newLead.id)) return prev;
+              // Only toast for individual leads when NOT in the middle of a manual scrape
+              // (manual scrape shows its own batch summary toast after fetchLeads completes)
+              if (!scrapingRef.current) {
+                toast.success("New lead found!");
+              }
+              return [newLead, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "leads_queue",
+          filter: `platform=eq.${platform}`,
+        },
+        (payload) => {
+          const updated = payload.new as Lead;
+          setLeads((prev) =>
+            prev.map((l) => (l.id === updated.id ? { ...l, ...updated } : l))
+          );
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [platform, toast]);
+
+  const handleScrapeMore = async () => {
+    setScraping(true);
+    scrapingRef.current = true;
+    try {
+      const result = await triggerScrape({ platform, force: true });
+      if (result.throttled) {
+        toast.error(`Scrape throttled. Try again in ${result.next_scrape_in_minutes ?? 10} minutes.`);
+        return;
+      }
+
+      // Always fetch leads first, wait for paint, THEN show toast
+      await fetchLeads();
+      await afterPaint();
+
+      if (result.inserted && result.inserted > 0) {
+        toast.success(`Found ${result.inserted} new leads!`);
+      } else if (result.error) {
+        toast.error(`Scrape error: ${result.error}`);
+      } else {
+        toast.success("No new leads found this time.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Scrape failed";
+      toast.error(msg);
+    } finally {
+      scrapingRef.current = false;
+      setScraping(false);
+    }
+  };
 
   const handleReplied = (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
-    // Mark coachmark as seen once first reply is clicked
     if (typeof window !== "undefined") {
       localStorage.setItem(COACHMARK_KEY, "1");
       setShowCoachmark(false);
@@ -96,20 +198,32 @@ export function LeadQueue({ platform }: { platform: Platform }) {
 
   if (leads.length === 0) {
     return (
-      <EmptyState
-        icon={<Radar size={22} />}
-        title="No leads for this platform yet"
-        description={
-          platform === "X"
-            ? "Add your first competitor target, then wait 10-15 minutes. AI will automatically filter and prepare a ready-to-send draft reply."
-            : "Add a competitor username, then wait 10-15 minutes. AI will automatically filter and prepare a ready-to-send draft reply."
-        }
-        action={
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-            <Sparkles size={12} className="text-accent" /> Tip: use specific keywords like &ldquo;@app slow&rdquo; to find leads faster
-          </span>
-        }
-      />
+      <div className="space-y-4">
+        <EmptyState
+          icon={<Radar size={22} />}
+          title="No leads for this platform yet"
+          description={
+            platform === "X"
+              ? "Add your first competitor target and click 'Scrape More' to find complaints."
+              : "Add a competitor username and click 'Scrape More' to find complaints."
+          }
+        />
+        {/* Scrape More button even on empty state */}
+        <div className="flex justify-center">
+          <button
+            onClick={handleScrapeMore}
+            disabled={scraping}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted transition-colors hover:border-accent/50 hover:text-text disabled:opacity-50"
+          >
+            {scraping ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <RefreshCw size={14} />
+            )}
+            {scraping ? "Scanning..." : "Scrape More"}
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -119,9 +233,26 @@ export function LeadQueue({ platform }: { platform: Platform }) {
         <h2 className="text-sm font-semibold text-text">
           Lead queue
         </h2>
-        <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-          {leads.length} pending
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+            {leads.length} pending
+          </span>
+          {/* Scrape More button */}
+          <motion.button
+            onClick={handleScrapeMore}
+            disabled={scraping}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium text-muted transition-colors hover:border-accent/40 hover:text-text disabled:opacity-50"
+          >
+            {scraping ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <RefreshCw size={11} />
+            )}
+            {scraping ? "Scanning..." : "Scrape More"}
+          </motion.button>
+        </div>
       </div>
       <AnimatePresence mode="popLayout">
         {leads.map((lead, i) => (

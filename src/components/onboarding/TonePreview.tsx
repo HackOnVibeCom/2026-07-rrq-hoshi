@@ -101,7 +101,7 @@ function TweetCard({
               <img
                 src={avatar}
                 alt={authorName}
-                className="h-full w-full object-cover"
+                className={`h-full w-full ${avatar.includes('LogoUndercut.svg') ? 'object-contain p-1' : 'object-cover'}`}
                 onError={(e) => {
                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                     authorName
@@ -206,7 +206,7 @@ export function TonePreview({
           <TweetCard
             authorName={`${app} (AI Draft)`}
             authorHandle={`@${app.toLowerCase().replace(/[^a-z0-9]/g, "")}`}
-            avatar="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80"
+            avatar="/LogoUndercut.svg"
             verified={true}
             text={reply}
             timestamp="12:48 PM · Jun 2, 2026"

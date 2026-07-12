@@ -5,6 +5,10 @@ import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { useAuthModal } from "@/components/AuthModalProvider";
 import { ArrowRight } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 const QUICK_LINKS = [
   { label: "How it Works", href: "/#how" },
@@ -14,7 +18,26 @@ const QUICK_LINKS = [
 ];
 
 export function Footer() {
+  const router = useRouter();
+  const supabase = createClient();
   const { open } = useAuthModal();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    getSession();
+  }, [supabase]);
+
+  const handleStartFree = () => {
+    if (user) {
+      router.push("/dashboard/x");
+    } else {
+      open();
+    }
+  };
 
   return (
     <footer className="border-t border-border bg-surface/30">
@@ -64,7 +87,7 @@ export function Footer() {
               </a>
             </div>
             <div>
-              <Button size="md" onClick={open} className="w-full sm:w-auto">
+              <Button size="md" onClick={handleStartFree} className="w-full sm:w-auto">
                 Start Free — No Card Needed
                 <ArrowRight size={16} className="ml-1" />
               </Button>

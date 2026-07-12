@@ -56,9 +56,10 @@ export function AuthModal() {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
-      console.error("Google sign in failed:", err.message || err);
-      alert("Sign in failed: " + (err.message || err));
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error("Google sign in failed:", errMsg);
+      alert("Sign in failed: " + errMsg);
     }
   };
 

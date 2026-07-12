@@ -1,13 +1,5 @@
 "use client";
 
-import {
-  MOCK_COMPETITORS,
-  MOCK_LEDGER,
-  MOCK_LEADS,
-  MOCK_PROFILE,
-  MOCK_TRANSACTIONS,
-  MOCK_REPLIES,
-} from "@/lib/mock-data";
 import type {
   Competitor,
   Lead,
@@ -28,105 +20,154 @@ export type {
   BillingEntry,
 };
 
-// Frontend-only data adapter. When NEXT_PUBLIC_SUPABASE_URL is set, the
-// backend can be wired up by replacing the bodies below with real Supabase
-// queries. For now everything reads/writes against in-memory mock state so the
-// whole UX flow can be exercised end-to-end on the client.
+/**
+ * Client-side data layer — calls Next.js API routes.
+ * All mutations go through /api/* endpoints which enforce auth + RLS.
+ */
 
-const HAS_SUPABASE = Boolean(
-  typeof process !== "undefined" && process.env.NEXT_PUBLIC_SUPABASE_URL
-);
-
-export const DEMO_MODE_TEXT = HAS_SUPABASE
-  ? "Mode: Supabase"
-  : "Mode: Demo (mock data)";
-
-let competitorsStore: Competitor[] = [...MOCK_COMPETITORS];
-let leadsStore: Lead[] = [...MOCK_LEADS];
-let profileStore: Profile = { ...MOCK_PROFILE };
-const ledgerStore: BillingEntry[] = [...MOCK_LEDGER];
-const transactionsStore: Transaction[] = [...MOCK_TRANSACTIONS];
-
-const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
-
-function uid(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+async function apiFetch<T>(
+  path: string,
+  options?: RequestInit
+): Promise<T> {
+  const res = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? `API error ${res.status}`);
+  }
+  return res.json();
 }
 
+// ─── PROFILE ──────────────────────────────────────────────────────────────────
+
 export async function getProfile(): Promise<Profile> {
-  await delay(150);
-  return { ...profileStore };
+  return apiFetch<Profile>("/api/profile");
 }
 
 export async function saveProfile(input: ProfileInput): Promise<Profile> {
-  await delay(400);
-  profileStore = {
-    ...profileStore,
-    ...input,
-    onboarding_completed: true,
-  };
-  return { ...profileStore };
+  return apiFetch<Profile>("/api/profile", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
+// ─── COMPETITORS ──────────────────────────────────────────────────────────────
+
 export async function listCompetitors(platform: Platform): Promise<Competitor[]> {
-  await delay(200);
-  return competitorsStore.filter((c) => c.platform === platform);
+  return apiFetch<Competitor[]>(`/api/competitors?platform=${platform}`);
 }
 
 export async function addCompetitor(
   data: Pick<Competitor, "competitor_name" | "platform" | "search_query">
 ): Promise<Competitor> {
-  await delay(300);
-  const competitor: Competitor = {
-    id: uid("comp"),
-    profile_id: profileStore.id,
-    competitor_name: data.competitor_name,
-    platform: data.platform,
-    search_query: data.search_query,
-    is_active: true,
-    created_at: new Date().toISOString(),
-  };
-  competitorsStore = [competitor, ...competitorsStore];
-  return competitor;
+  return apiFetch<Competitor>("/api/competitors", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export async function deleteCompetitor(id: string): Promise<void> {
-  await delay(200);
-  competitorsStore = competitorsStore.filter((c) => c.id !== id);
+  await apiFetch(`/api/competitors/${id}`, { method: "DELETE" });
 }
 
 export async function toggleCompetitor(id: string): Promise<void> {
-  await delay(150);
-  competitorsStore = competitorsStore.map((c) =>
-    c.id === id ? { ...c, is_active: !c.is_active } : c
-  );
+  await apiFetch(`/api/competitors/${id}`, { method: "PATCH" });
 }
+
+// ─── LEADS ────────────────────────────────────────────────────────────────────
 
 export async function listLeads(
   platform: Platform,
   filter: "PENDING" | "ALL" = "PENDING"
 ): Promise<Lead[]> {
-  await delay(350);
-  const list = leadsStore
-    .filter((l) => l.platform === platform)
-    .filter((l) => (filter === "PENDING" ? l.status === "PENDING" : true))
-    .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
-  return list;
+  return apiFetch<Lead[]>(`/api/leads?platform=${platform}&filter=${filter}`);
 }
 
 export async function updateLeadDraft(id: string, draft: string): Promise<void> {
-  await delay(120);
-  leadsStore = leadsStore.map((l) =>
-    l.id === id ? { ...l, gate_2_generated_reply: draft } : l
-  );
+  await apiFetch(`/api/leads/${id}/draft`, {
+    method: "PUT",
+    body: JSON.stringify({ draft }),
+  });
 }
 
 export async function markLeadReplied(id: string): Promise<void> {
-  await delay(200);
-  leadsStore = leadsStore.map((l) =>
-    l.id === id ? { ...l, status: "REPLIED" } : l
-  );
+  await apiFetch(`/api/leads/${id}/reply`, { method: "POST" });
 }
+
+export async function deleteLead(id: string): Promise<void> {
+  await apiFetch(`/api/leads/${id}`, { method: "DELETE" });
+}
+
+/**
+ * Generate a reply draft for a single lead via the full LLM pipeline.
+ * Returns the updated lead (re-fetched from DB after pipeline runs).
+ */
+export async function generateLeadReply(id: string): Promise<Lead> {
+  const result = await apiFetch<{
+    result: string;
+    reply?: string;
+    credit_type?: string;
+    processing_time_ms?: number;
+    reason?: string;
+  }>("/api/pipeline/process-lead", {
+    method: "POST",
+    body: JSON.stringify({ lead_id: id }),
+  });
+
+  if (result.result === "PENDING_PAYMENT") {
+    throw new Error("PENDING_PAYMENT");
+  }
+  if (result.result === "REJECTED") {
+    throw new Error("REJECTED");
+  }
+
+  // Re-fetch the specific updated lead by ID
+  const updated = await apiFetch<Lead>(`/api/leads/${id}`);
+  if (!updated) throw new Error("Lead not found after pipeline");
+  return updated;
+}
+
+/**
+ * Trigger batch parallel processing for multiple leads.
+ */
+export async function generateBatchReplies(leadIds: string[]): Promise<{
+  summary: { total: number; success: number; rejected: number; pending_payment: number; failed: number };
+  results: Array<{ lead_id: string; status: string; reply?: string; error?: string }>;
+}> {
+  return apiFetch("/api/pipeline/process-batch", {
+    method: "POST",
+    body: JSON.stringify({ lead_ids: leadIds }),
+  });
+}
+
+// ─── SCRAPING ─────────────────────────────────────────────────────────────────
+
+export async function triggerScrape(options?: {
+  competitor_target_id?: string;
+  platform?: Platform;
+  force?: boolean;
+}): Promise<{
+  message: string;
+  scraped?: number;
+  fuzzy_filtered?: number;
+  inserted?: number;
+  duplicates?: number;
+  throttled?: boolean;
+  next_scrape_in_minutes?: number;
+  error?: string;
+}> {
+  return apiFetch("/api/ingest/scrape", {
+    method: "POST",
+    body: JSON.stringify(options ?? {}),
+  });
+}
+
+// ─── BILLING ──────────────────────────────────────────────────────────────────
 
 export interface BillingStatus {
   credit_balance: number;
@@ -137,113 +178,45 @@ export interface BillingStatus {
 }
 
 export async function getBillingStatus(): Promise<BillingStatus> {
-  await delay(150);
-  const leadsRepliedTotal = leadsStore.filter((l) => l.status === "REPLIED").length;
-  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const leadsThisWeek = leadsStore.filter(
-    (l) => +new Date(l.created_at) >= weekAgo
-  ).length;
-  return {
-    credit_balance: profileStore.credit_balance,
-    free_demo_credits_remaining: profileStore.free_demo_credits_remaining,
-    free_demo_reset_at: profileStore.free_demo_reset_at,
-    leads_this_week: leadsThisWeek,
-    leads_replied_total: leadsRepliedTotal,
-  };
+  return apiFetch<BillingStatus>("/api/billing/status");
 }
 
 export async function listLedger(): Promise<BillingEntry[]> {
-  await delay(200);
-  return [...ledgerStore].sort(
-    (a, b) => +new Date(b.created_at) - +new Date(a.created_at)
+  const data = await apiFetch<{ ledger: BillingEntry[]; transactions: Transaction[] }>(
+    "/api/billing/history"
   );
+  return data.ledger;
 }
 
 export async function listTransactions(): Promise<Transaction[]> {
-  await delay(200);
-  return [...transactionsStore].sort(
-    (a, b) => +new Date(b.created_at) - +new Date(a.created_at)
+  const data = await apiFetch<{ ledger: BillingEntry[]; transactions: Transaction[] }>(
+    "/api/billing/history"
   );
+  return data.transactions;
 }
 
-export async function createTopUp(amountUsd: number): Promise<{ redirectUrl: string; orderId: string }> {
-  try {
-    const res = await fetch('/api/billing/topup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+export async function createTopUp(
+  amountUsd: number
+): Promise<{ redirectUrl: string; orderId: string }> {
+  const data = await apiFetch<{ id: string; url: string; order_id: string }>(
+    "/api/billing/topup",
+    {
+      method: "POST",
       body: JSON.stringify({ amount_usd: amountUsd }),
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      if (data.url) {
-        return {
-          redirectUrl: data.url,
-          orderId: data.order_id,
-        };
-      }
     }
-  } catch (err) {
-    console.warn('API topup failed, falling back to mock Stripe redirect:', err);
-  }
-
-  const orderId = `undercut-${Date.now()}`;
-  return {
-    redirectUrl: 'https://checkout.stripe.com/pay/dummy_session',
-    orderId,
-  };
-}
-
-export function decrementDemoCredit() {
-  if (profileStore.free_demo_credits_remaining > 0) {
-    profileStore = {
-      ...profileStore,
-      free_demo_credits_remaining: profileStore.free_demo_credits_remaining - 1,
-    };
-  }
-  return { ...profileStore };
-}
-
-export function deductBillingCredit(): boolean {
-  if (profileStore.free_demo_credits_remaining > 0) {
-    profileStore = {
-      ...profileStore,
-      free_demo_credits_remaining: profileStore.free_demo_credits_remaining - 1,
-    };
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("billing-updated"));
-    }
-    return true;
-  } else if (profileStore.credit_balance >= 0.10) {
-    profileStore = {
-      ...profileStore,
-      credit_balance: Number((profileStore.credit_balance - 0.10).toFixed(2)),
-    };
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("billing-updated"));
-    }
-    return true;
-  }
-  return false;
-}
-
-export async function generateLeadReply(id: string): Promise<Lead> {
-  await delay(1200); // simulate generation delay
-
-  const reply = MOCK_REPLIES[id] || "Hey! I saw your post. I built Undercut to help with this. Let me know if you want to try it!";
-  
-  leadsStore = leadsStore.map((l) =>
-    l.id === id ? {
-      ...l,
-      gate_2_generated_reply: reply,
-      gate_2_model_used: "deepseek-chat",
-      processing_time_ms: 3200
-    } : l
   );
-  
-  const updated = leadsStore.find((l) => l.id === id);
-  if (!updated) throw new Error("Lead not found");
-  return updated;
+  return { redirectUrl: data.url, orderId: data.order_id };
+}
+
+// ─── LEGACY COMPAT (kept for components that call these) ──────────────────────
+
+/** @deprecated Use generateLeadReply which calls the real pipeline */
+export function deductBillingCredit(): boolean {
+  // No-op in real mode — credit deduction is handled server-side by consume_cycle_credit
+  return true;
+}
+
+/** @deprecated Legacy mock function */
+export function decrementDemoCredit() {
+  return {} as Profile;
 }

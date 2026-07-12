@@ -25,6 +25,7 @@ const INITIAL: ProfileInput = {
     differentiator_3: "",
   },
   company_name: null,
+  x_plan: "free",
 };
 
 const CATEGORIES = [
@@ -156,11 +157,24 @@ export default function OnboardingWizard({
 }) {
   const isEdit = !!initial?.onboarding_completed;
   const [step, setStep] = useState(isEdit ? 0 : 1);
-  const [form, setForm] = useState<ProfileInput>(
-    initial
-      ? { ...INITIAL, ...initial, company_name: initial.company_name ?? null }
-      : INITIAL
-  );
+  const [form, setForm] = useState<ProfileInput>(() => {
+    if (!initial) return INITIAL;
+    return {
+      app_name: initial.app_name ?? "",
+      app_description: initial.app_description ?? "",
+      app_url: initial.app_url ?? "",
+      app_category: initial.app_category ?? "",
+      target_audience: initial.target_audience ?? "",
+      tone_of_voice: initial.tone_of_voice ?? "friendly",
+      differentiators: initial.differentiators ?? {
+        differentiator_1: "",
+        differentiator_2: "",
+        differentiator_3: "",
+      },
+      company_name: initial.company_name ?? null,
+      x_plan: initial.x_plan ?? "free",
+    };
+  });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const router = useRouter();
@@ -242,15 +256,19 @@ export default function OnboardingWizard({
       getProfile().then((p) => {
         if (p.onboarding_completed) {
           setForm({
-            app_name: p.app_name,
-            app_description: p.app_description,
-            app_url: p.app_url,
-            app_category: p.app_category,
-            target_audience: p.target_audience,
-            tone_of_voice: p.tone_of_voice,
-            differentiators: p.differentiators,
-            company_name: p.company_name,
-            x_plan: p.x_plan || "free",
+            app_name: p.app_name ?? "",
+            app_description: p.app_description ?? "",
+            app_url: p.app_url ?? "",
+            app_category: p.app_category ?? "",
+            target_audience: p.target_audience ?? "",
+            tone_of_voice: p.tone_of_voice ?? "friendly",
+            differentiators: p.differentiators ?? {
+              differentiator_1: "",
+              differentiator_2: "",
+              differentiator_3: "",
+            },
+            company_name: p.company_name ?? null,
+            x_plan: p.x_plan ?? "free",
           });
         }
       });
@@ -263,14 +281,14 @@ export default function OnboardingWizard({
   const canProceed = () => {
     if (step === 1)
       return (
-        form.app_name.trim() &&
-        form.app_description.trim() &&
-        isValidUrl(form.app_url)
+        (form.app_name ?? "").trim() &&
+        (form.app_description ?? "").trim() &&
+        isValidUrl(form.app_url ?? "")
       );
     if (step === 2)
-      return form.app_category.trim() && form.target_audience.trim();
+      return (form.app_category ?? "").trim() && (form.target_audience ?? "").trim();
     if (step === 3)
-      return diffs.some((d) => d.trim().length > 0);
+      return diffs.some((d) => (d ?? "").trim().length > 0);
     return false;
   };
 
@@ -279,7 +297,8 @@ export default function OnboardingWizard({
     try {
       await saveProfile(form);
       toast.success("Profile saved — welcome aboard!");
-      router.push("/dashboard/x");
+      // Force full page load to bypass client-side router cache and make sure middleware sees updated profile.
+      window.location.href = "/dashboard/x";
     } catch {
       toast.error("Couldn't save profile");
       setSaving(false);
@@ -510,7 +529,7 @@ export default function OnboardingWizard({
                 </div>
 
                 <p className="text-xs text-muted/95 leading-relaxed bg-[#111114] p-3.5 rounded-xl border border-border">
-                  <strong>What is a differentiator?</strong> A differentiator (or USP) is a unique feature, benefit, or pricing advantage that sets your app apart from competitors (e.g., <em>&quot;Offline-first sync&quot;</em>, <em>&quot;SLA response under 2 hours&quot;</em>, or <em>&quot;No credit card required&quot;</em>). The AI uses these key facts to draft highly personalized replies that showcase your product's unique value.
+                  <strong>What is a differentiator?</strong> A differentiator (or USP) is a unique feature, benefit, or pricing advantage that sets your app apart from competitors (e.g., <em>&quot;Offline-first sync&quot;</em>, <em>&quot;SLA response under 2 hours&quot;</em>, or <em>&quot;No credit card required&quot;</em>). The AI uses these key facts to draft highly personalized replies that showcase your product&apos;s unique value.
                 </p>
 
                 <div className="space-y-2">
@@ -554,7 +573,7 @@ export default function OnboardingWizard({
                 <p className="text-[11px] text-muted leading-relaxed">
                   Select your X account plan to enforce the correct character limits on replies.
                 </p>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     type="button"
                     onClick={() => update("x_plan", "free")}
@@ -793,7 +812,7 @@ function Step3Fields({
         <p className="text-xs text-muted leading-relaxed mb-3">
           Select your X account plan to enforce the correct character limits on replies.
         </p>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             type="button"
             onClick={() => onXPlanChange("free")}

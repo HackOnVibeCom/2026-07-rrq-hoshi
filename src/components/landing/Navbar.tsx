@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { useAuthModal } from "@/components/AuthModalProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
 
 const NAV_LINKS = [
   { label: "How it Works", href: "/#how" },
@@ -23,7 +25,7 @@ export function Navbar() {
 
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -60,9 +62,9 @@ export function Navbar() {
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-        <a href="/" aria-label="Undercut home" className="shrink-0">
+        <Link href="/" aria-label="Undercut home" className="shrink-0">
           <Logo />
-        </a>
+        </Link>
 
         <div className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (

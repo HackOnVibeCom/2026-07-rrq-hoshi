@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   let body: string
   try {
     body = await request.text()
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 })
   }
 
@@ -26,9 +26,10 @@ export async function POST(request: Request) {
     }
 
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err: any) {
-    console.error(`Stripe webhook signature verification failed: ${err.message}`)
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : 'Unknown error'
+    console.error(`Stripe webhook signature verification failed: ${errMsg}`)
+    return NextResponse.json({ error: `Webhook Error: ${errMsg}` }, { status: 400 })
   }
 
   // Handle the event
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
     const supabaseAdmin = createServiceRoleClient()
 
     // 1. Idempotency Check: Verify if event was already processed
-    const { data: existingEvent, error: checkError } = await supabaseAdmin
+    const { data: existingEvent } = await supabaseAdmin
       .from('webhook_events')
       .select('id')
       .eq('event_id', eventId)
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
         throw new Error(`Failed to fetch user profile ${transaction.profile_id}: ${profileError?.message}`)
       }
 
-      const currentBalance = parseFloat(profile.credit_balance as any) || 0
+      const currentBalance = Number(profile.credit_balance) || 0
       const newBalance = currentBalance + creditGrantedUsd
 
       // Update credit balance in public.profiles
