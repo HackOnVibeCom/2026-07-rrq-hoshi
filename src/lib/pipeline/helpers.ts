@@ -148,12 +148,8 @@ export async function processLeadPipeline(
     const classification = await runGate1(lead.raw_content, competitorName, 15000)
 
     if (!classification.passed) {
-      await updateLeadAfterPipeline(leadId, {
-        gate_1_passed: false,
-        gate_1_model_used: classification.model_used,
-        status: 'REJECTED',
-        processing_time_ms: Date.now() - pipelineStart,
-      })
+      // Delete the lead from leads_queue immediately if rejected by AI Gate 1
+      await admin.from('leads_queue').delete().eq('id', leadId)
 
       return {
         result: 'REJECTED',

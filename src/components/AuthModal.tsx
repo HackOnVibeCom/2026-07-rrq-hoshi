@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useAuthModal } from "@/components/AuthModalProvider";
 import { createClient } from "@/utils/supabase/client";
+import Link from "next/link";
 
 function GoogleIcon() {
   return (
@@ -115,7 +116,15 @@ export function AuthModal() {
             </button>
 
             <p className="mt-5 text-center text-xs text-muted">
-              By continuing, you agree to our Terms of Service and Privacy Policy.
+              By continuing, you agree to our{" "}
+              <Link href="/terms" onClick={close} className="underline hover:text-text">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" onClick={close} className="underline hover:text-text">
+                Privacy Policy
+              </Link>
+              .
             </p>
           </motion.div>
         </motion.div>

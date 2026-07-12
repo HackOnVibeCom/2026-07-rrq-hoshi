@@ -583,7 +583,7 @@ export default function OnboardingWizard({
                         : "border-border bg-surface text-text hover:border-accent/40"
                     }`}
                   >
-                    Free Plan (280 chars)
+                    Free Plan (262 chars)
                   </button>
                   <button
                     type="button"
@@ -822,7 +822,7 @@ function Step3Fields({
                 : "border-border bg-surface hover:border-accent/40"
             }`}
           >
-            Free Plan (280 chars)
+            Free Plan (262 chars)
           </button>
           <button
             type="button"

@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Radar, RefreshCw, Sparkles } from "lucide-react";
+import { Loader2, Radar, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { LeadCard } from "@/components/dashboard/LeadCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
-import { listLeads, triggerScrape } from "@/lib/data";
+import { listLeads, triggerScrape, deletePlatformLeads } from "@/lib/data";
 import { createClient } from "@/utils/supabase/client";
 import type { Lead, Platform } from "@/lib/types";
 
@@ -17,6 +17,7 @@ export function LeadQueue({ platform }: { platform: Platform }) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [scraping, setScraping] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
   const [showCoachmark, setShowCoachmark] = useState(false);
   const toast = useToast();
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
@@ -151,7 +152,32 @@ export function LeadQueue({ platform }: { platform: Platform }) {
     }
   };
 
+  const handleDeleteAll = async () => {
+    if (leads.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete all ${platform === "X" ? "X" : "Instagram"} leads?`)) return;
+    setDeletingAll(true);
+    try {
+      await deletePlatformLeads(platform);
+      setLeads([]);
+      toast.success(`All ${platform === "X" ? "X" : "Instagram"} leads cleared.`);
+    } catch {
+      toast.error("Failed to delete leads.");
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   const handleReplied = (id: string) => {
+    setLeads((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, status: "REPLIED" } : l))
+    );
+    if (typeof window !== "undefined") {
+      localStorage.setItem(COACHMARK_KEY, "1");
+      setShowCoachmark(false);
+    }
+  };
+
+  const handleDeleted = (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
     if (typeof window !== "undefined") {
       localStorage.setItem(COACHMARK_KEY, "1");
@@ -234,36 +260,71 @@ export function LeadQueue({ platform }: { platform: Platform }) {
           Lead queue
         </h2>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+          {/* Pending Badge */}
+          <span className="inline-flex h-7 items-center justify-center rounded-full border border-accent/20 bg-accent/10 px-3.5 text-[11px] font-bold text-accent select-none">
             {leads.length} pending
           </span>
+
           {/* Scrape More button */}
-          <motion.button
+          <button
             onClick={handleScrapeMore}
-            disabled={scraping}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium text-muted transition-colors hover:border-accent/40 hover:text-text disabled:opacity-50"
+            disabled={scraping || deletingAll}
+            className="inline-flex h-7 items-center justify-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[11px] font-medium text-muted transition-all hover:border-accent/40 hover:text-text disabled:opacity-50 cursor-pointer"
           >
             {scraping ? (
-              <Loader2 size={11} className="animate-spin" />
+              <Loader2 size={11} className="animate-spin text-accent" />
             ) : (
               <RefreshCw size={11} />
             )}
             {scraping ? "Scanning..." : "Scrape More"}
-          </motion.button>
+          </button>
+
+          {/* Delete All button */}
+          <button
+            onClick={handleDeleteAll}
+            disabled={deletingAll || scraping || leads.length === 0}
+            className="inline-flex h-7 items-center justify-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[11px] font-medium text-muted transition-all hover:border-accent/40 hover:text-text disabled:opacity-50 cursor-pointer"
+          >
+            {deletingAll ? (
+              <Loader2 size={11} className="animate-spin text-accent" />
+            ) : (
+              <Trash2 size={11} />
+            )}
+            Delete All
+          </button>
         </div>
       </div>
       <AnimatePresence mode="popLayout">
-        {leads.map((lead, i) => (
+        {sortLeads(leads).map((lead, i) => (
           <LeadCard
             key={lead.id}
             lead={lead}
             showCoachmark={showCoachmark && i === 0}
             onReplied={handleReplied}
+            onDeleted={handleDeleted}
           />
         ))}
       </AnimatePresence>
     </div>
   );
 }
+
+const sortLeads = (list: Lead[]): Lead[] => {
+  return [...list].sort((a, b) => {
+    const hasDraftA = !!a.gate_2_generated_reply;
+    const hasDraftB = !!b.gate_2_generated_reply;
+
+    // Rule 1: Drafts always come first
+    if (hasDraftA && !hasDraftB) return -1;
+    if (!hasDraftA && hasDraftB) return 1;
+
+    // Rule 2: Unreplied leads come before replied leads
+    const isRepliedA = a.status === "REPLIED";
+    const isRepliedB = b.status === "REPLIED";
+    if (!isRepliedA && isRepliedB) return -1;
+    if (isRepliedA && !isRepliedB) return 1;
+
+    // Rule 3: Sort by created_at descending (newest first)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+};

@@ -20,7 +20,7 @@ const GATE2_PRIMARY_PROVIDER = 'deepseek'
 const GATE2_FALLBACK_MODELS = GATE2_FALLBACKS
 
 const CHAR_LIMITS: Record<string, number> = {
-  X: 270,        // 280 max, leave 10 char buffer
+  X: 262,        // 280 max, leave buffer for prepended handles on replies
   INSTAGRAM: 490, // 500 max, leave 10 char buffer
 }
 

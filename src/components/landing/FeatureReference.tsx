@@ -19,7 +19,7 @@ const GROUPS = [
       "Free Gate 1 (relevance & sentiment filter)",
       "Gate 2 full personalization based on app profile",
       "150-second timeout per cycle, guaranteed no hanging",
-      "Draft replies adjusted for platform limits (280 chars X, 500 chars IG)",
+      "Draft replies adjusted for platform limits (262 chars X, 500 chars IG)",
     ],
   },
   {

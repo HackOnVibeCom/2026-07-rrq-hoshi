@@ -196,7 +196,7 @@ export async function listLeads(
 
   // "PENDING" filter shows leads that are ready to reply on (not yet actioned)
   if (filter === 'PENDING') {
-    query = query.in('status', ['PENDING', 'PENDING_PAYMENT'])
+    query = query.in('status', ['PENDING', 'PENDING_PAYMENT', 'REPLIED'])
   }
 
   const { data, error } = await query

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CreditCard, User, LogOut, Home } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { XIcon, InstagramIcon } from "@/components/ui/BrandIcons";
+import { createClient } from "@/utils/supabase/client";
 
 const X_PATH = "/dashboard/x";
 const IG_PATH = "/dashboard/instagram";
@@ -17,6 +18,7 @@ export function Sidebar({
   igPending: number;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const itemClass = (active: boolean) =>
     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
@@ -24,6 +26,13 @@ export function Sidebar({
         ? "bg-accent/10 text-accent"
         : "text-muted hover:bg-surface-2 hover:text-text"
     }`;
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   return (
     <aside className="hidden h-screen sticky top-0 w-60 shrink-0 border-r border-border bg-surface/30 md:flex md:flex-col">
@@ -84,10 +93,13 @@ export function Sidebar({
           <Home size={16} />
           <span className="flex-1">Back to landing page</span>
         </Link>
-        <Link href="/login" className={itemClass(false)}>
+        <button
+          onClick={handleSignOut}
+          className={`${itemClass(false)} w-full text-left cursor-pointer`}
+        >
           <LogOut size={16} />
           <span className="flex-1">Sign out</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

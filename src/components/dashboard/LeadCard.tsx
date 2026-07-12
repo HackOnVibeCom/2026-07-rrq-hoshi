@@ -24,10 +24,12 @@ export function LeadCard({
   lead,
   showCoachmark,
   onReplied,
+  onDeleted,
 }: {
   lead: Lead;
   showCoachmark?: boolean;
   onReplied: (id: string) => void;
+  onDeleted: (id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(lead.gate_2_generated_reply ?? "");
@@ -60,7 +62,7 @@ export function LeadCard({
   const toast = useToast();
   const isX = lead.platform === "X";
   const PlatformIcon = isX ? XIcon : InstagramIcon;
-  const charLimit = isX ? (xPlan === "paid" ? 25000 : 280) : 500;
+  const charLimit = isX ? (xPlan === "paid" ? 25000 : 262) : 500;
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -70,12 +72,14 @@ export function LeadCard({
       setDraft(updated.gate_2_generated_reply ?? "");
       setProcessingTime(updated.processing_time_ms);
       toast.success("Draft reply generated! 1 cycle deducted.");
+      window.dispatchEvent(new CustomEvent("billing-updated"));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "unknown";
       if (msg === "PENDING_PAYMENT") {
         toast.error("Insufficient balance. Top up to continue!");
       } else if (msg === "REJECTED") {
         toast.error("This post didn't pass AI relevance check.");
+        onDeleted(lead.id); // Remove card instantly from UI on AI rejection
       } else {
         toast.error("Draft generation failed. Please try again.");
       }
@@ -121,7 +125,7 @@ export function LeadCard({
     try {
       await deleteLead(lead.id);
       toast.success("Lead dismissed");
-      onReplied(lead.id); // client-side UI removal
+      onDeleted(lead.id); // client-side UI removal
     } catch {
       toast.error("Failed to dismiss lead");
     }
@@ -350,9 +354,15 @@ export function LeadCard({
 
                 {/* Badge and Processing Time */}
                 <div className="flex items-center gap-1.5 mb-3">
-                  <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-success/10 text-success border border-success/20">
-                    UNDERCUT DRAFT
-                  </span>
+                  {lead.status === "REPLIED" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-white/5 text-muted border border-white/10">
+                      REPLIED
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-success/10 text-success border border-success/20">
+                      UNDERCUT DRAFT
+                    </span>
+                  )}
                   {processingTime && (
                     <span className="text-[10px] text-muted font-mono bg-surface-2 border border-border px-1.5 py-0.5 rounded-full">
                       {(processingTime / 1000).toFixed(1)}s
@@ -404,13 +414,22 @@ export function LeadCard({
                 <div className="flex items-center justify-end">
                   <Button
                     size="sm"
-                    variant="primary"
+                    variant={lead.status === "REPLIED" ? "ghost" : "primary"}
                     onClick={handleReply}
                     disabled={replying || wordOverflow || editing}
-                    className="relative"
+                    className="relative cursor-pointer"
                   >
-                    <Send size={12} />
-                    {isX ? "Reply on X" : "Reply on Instagram"}
+                    {lead.status === "REPLIED" ? (
+                      <>
+                        <Check size={12} className="text-success" />
+                        {isX ? "Replied on X" : "Replied on IG"}
+                      </>
+                    ) : (
+                      <>
+                        <Send size={12} />
+                        {isX ? "Reply on X" : "Reply on Instagram"}
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>

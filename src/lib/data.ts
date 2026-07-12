@@ -103,6 +103,10 @@ export async function deleteLead(id: string): Promise<void> {
   await apiFetch(`/api/leads/${id}`, { method: "DELETE" });
 }
 
+export async function deletePlatformLeads(platform: Platform): Promise<void> {
+  await apiFetch(`/api/leads?platform=${platform}`, { method: "DELETE" });
+}
+
 /**
  * Generate a reply draft for a single lead via the full LLM pipeline.
  * Returns the updated lead (re-fetched from DB after pipeline runs).
