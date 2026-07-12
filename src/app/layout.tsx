@@ -1,13 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { AuthModalProvider } from "@/components/AuthModalProvider";
 import { AuthModal } from "@/components/AuthModal";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const inter = Inter({
-  variable: "--font-inter",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
@@ -30,6 +38,7 @@ export const viewport: Viewport = {
   themeColor: "#0F0F11",
   width: "device-width",
   initialScale: 1,
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -38,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} dark`}>
+    <html lang="en" className={`${plusJakarta.variable} ${playfair.variable} dark`}>
       <body className="min-h-screen bg-bg text-text antialiased">
         <AuthModalProvider>
           <ToastProvider>

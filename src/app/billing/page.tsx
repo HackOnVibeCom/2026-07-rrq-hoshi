@@ -119,7 +119,7 @@ export default function BillingView() {
                 <div className="flex items-center justify-between">
                   <span>Free demo this week</span>
                   <span className="font-semibold text-text">
-                    {status.free_demo_credits_remaining}/3
+                    {status.free_demo_credits_remaining}/5
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

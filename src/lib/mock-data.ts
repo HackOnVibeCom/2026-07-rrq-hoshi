@@ -26,7 +26,7 @@ export const MOCK_PROFILE: Profile = {
   image_placeholder_url: "https://via.placeholder.com/400x600.png?text=App+UI+Preview",
   company_name: "Solo Studio",
   credit_balance: 2.0,
-  free_demo_credits_remaining: 3,
+  free_demo_credits_remaining: 5,
   free_demo_reset_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
   created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
 };
@@ -37,7 +37,7 @@ export const MOCK_COMPETITORS: Competitor[] = [
     profile_id: "mock-profile-1",
     competitor_name: "CompetitorApp",
     platform: "X",
-    search_query: "@CompetitorApp lambat OR #CompetitorFail",
+    search_query: "@CompetitorApp slow OR #CompetitorFail",
     is_active: true,
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
   },

@@ -28,7 +28,7 @@ export function LeadQueue({ platform }: { platform: Platform }) {
           const prevIds = new Set(prev.map((l) => l.id));
           const newcomers = data.filter((l) => !prevIds.has(l.id));
           if (newcomers.length > 0) {
-            toast.success(`Lead baru ditemukan! (${newcomers.length})`);
+            toast.success(`New leads found! (${newcomers.length})`);
           }
         }
         return data;
@@ -82,16 +82,15 @@ export function LeadQueue({ platform }: { platform: Platform }) {
     return (
       <EmptyState
         icon={<Radar size={22} />}
-        title="Belum ada lead untuk platform ini"
+        title="No leads for this platform yet"
         description={
           platform === "X"
-            ? "Tambahkan target kompetitor pertamamu, lalu tunggu 10-15 menit. AI akan otomatis menyaring dan menyiapkan draf balasan siap kirim."
-            : "Tambahkan username kompetitor, lalu tunggu 10-15 menit. AI akan otomatis menyaring dan menyiapkan draf balasan siap kirim."
+            ? "Add your first competitor target, then wait 10-15 minutes. AI will automatically filter and prepare a ready-to-send draft reply."
+            : "Add a competitor username, then wait 10-15 minutes. AI will automatically filter and prepare a ready-to-send draft reply."
         }
         action={
           <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-            <Sparkles size={12} className="text-accent" /> Tips: gunakan keyword
-            spesifik seperti &ldquo;@app lambat&rdquo; untuk menemukan lead lebih cepat
+            <Sparkles size={12} className="text-accent" /> Tip: use specific keywords like &ldquo;@app slow&rdquo; to find leads faster
           </span>
         }
       />

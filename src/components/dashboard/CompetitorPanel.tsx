@@ -19,8 +19,8 @@ const MAX_TARGETS = 5;
 
 const placeHolder = (platform: Platform) =>
   platform === "X"
-    ? "@CompetitorApp lambat OR #CompetitorFail"
-    : "tokopedia";
+    ? "@CompetitorApp slow OR #CompetitorFail"
+    : "shopify";
 
 export function CompetitorPanel({ platform }: { platform: Platform }) {
   const [list, setList] = useState<Competitor[]>([]);
@@ -123,17 +123,17 @@ export function CompetitorPanel({ platform }: { platform: Platform }) {
       <p className="mt-2 text-xs text-muted">
         {platform === "X" ? (
           <>
-            <strong className="text-text">Format X:</strong> free-text query with
+            <strong className="text-text">X Format:</strong> free-text query with
             boolean operators (OR, AND), hashtag (<code className="text-accent">#</code>),
             mention (<code className="text-accent">@</code>). E.g.{" "}
-            <code className="text-accent">@CompetitorApp lambat OR #CompetitorFail</code>.
+            <code className="text-accent">@CompetitorApp slow OR #CompetitorFail</code>.
           </>
         ) : (
           <>
-            <strong className="text-text">Format Instagram:</strong> username only
+            <strong className="text-text">Instagram Format:</strong> username only
             (without <code className="text-accent">@</code>). We&apos;ll auto-strip{" "}
             <code className="text-accent">@</code> if you add it. E.g.{" "}
-            <code className="text-accent">tokopedia</code>.
+            <code className="text-accent">shopify</code>.
           </>
         )}
       </p>
@@ -210,11 +210,11 @@ export function CompetitorPanel({ platform }: { platform: Platform }) {
         {!loading && list.length === 0 && (
           <EmptyState
             icon={<Radio size={22} />}
-            title="Tambahkan kompetitor pertamamu"
+            title="Add your first competitor"
             description={
               platform === "X"
-                ? "Mulai dengan satu target — misalnya @CompetitorApp lambat. Kami mulai memantau dalam 10-15 menit."
-                : "Mulai dengan satu username — misalnya tokopedia. Kami pantau postingan terbaru secara paralel."
+                ? "Start with one target — e.g. @CompetitorApp slow. We'll start monitoring within 10-15 minutes."
+                : "Start with one username — e.g. shopify. We'll monitor new posts in parallel."
             }
           />
         )}

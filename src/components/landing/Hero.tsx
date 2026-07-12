@@ -1,42 +1,58 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageSquare, ArrowRight, Check, Send } from "lucide-react";
+import { ArrowRight, Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { XIcon, InstagramIcon } from "@/components/ui/BrandIcons";
 import { useAuthModal } from "@/components/AuthModalProvider";
+
+const VerifiedBadge = () => (
+  <svg className="h-4 w-4 text-[#1D9BF0] fill-current inline-block shrink-0" viewBox="0 0 24 24" aria-label="Verified account">
+    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.99-3.818-3.99-.48 0-.941.1-1.358.277C14.77 2.515 13.512 1.5 12 1.5s-2.77 1.015-3.414 2.287c-.417-.178-.878-.277-1.358-.277-2.108 0-3.818 1.78-3.818 3.99 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.58.875 2.95 2.148 3.6-.154.435-.238.905-.238 1.4 0 2.21 1.71 3.99 3.818 3.99.48 0 .941-.1 1.358-.277C9.23 21.485 10.488 22.5 12 22.5s2.77-1.015 3.414-2.287c.417.178.878.277 1.358.277 2.108 0 3.818-1.78 3.818-3.99 0-.495-.084-.965-.238-1.4 1.273-.65 2.148-2.02 2.148-3.6zm-12.8 3.46L6.53 12.81l1.414-1.414 1.756 1.756 4.344-4.344 1.414 1.414-5.758 5.758z" />
+  </svg>
+);
 
 function ComplaintCard() {
   return (
     <div
-      className="absolute left-0 top-10 hidden w-64 lg:block"
-      style={{ transform: "perspective(900px) rotateY(16deg) rotateX(6deg)" }}
+      className="absolute left-0 top-10 hidden w-[320px] lg:block select-none"
+      style={{ transform: "perspective(1000px) rotateY(20deg) rotateX(8deg)" }}
     >
       <motion.div
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="rounded-xl border border-border bg-surface p-4 shadow-2xl"
+        className="rounded-xl border border-border bg-surface p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-xs font-bold text-muted">
-            @
+        <div className="flex items-start gap-3">
+          <img 
+            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80" 
+            className="h-9 w-9 rounded-full object-cover shrink-0" 
+            alt="avatar" 
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1">
+              <span className="truncate text-sm font-bold text-text">frustrated_user</span>
+              <VerifiedBadge />
+            </div>
+            <p className="truncate text-xs text-muted">@frust_dev</p>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-text">frustrated_user</p>
-            <p className="text-xs text-muted">@frust_dev</p>
-          </div>
-          <div className="ml-auto text-muted">
-            <XIcon style={{ fontSize: 14 }} />
+          <div className="text-muted shrink-0 opacity-80 mt-0.5">
+            <XIcon style={{ fontSize: 13 }} />
           </div>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-muted">
-          Ugh, @CompetitorApp keeps crashing everytime I open it. Lost all my
-          drafts twice this week. Why is there no alternative? 😤
+
+        <p className="mt-3 text-sm leading-relaxed text-text/90">
+          Ugh, <span className="text-accent hover:underline cursor-pointer">@CompetitorApp</span> keeps crashing everytime I open it. Lost all my drafts twice this week. Why is there no alternative? 😤
         </p>
-        <div className="mt-3 flex items-center gap-2 text-xs text-muted">
-          <MessageSquare size={12} />
-          10:22 PM · just now
+
+        <p className="mt-3 text-xs text-muted">
+          10:22 PM · Jul 12, 2026
+        </p>
+
+        <div className="mt-3 pt-3 border-t border-border/40 flex items-center gap-4 text-xs font-normal text-muted select-none">
+          <span><strong className="text-text font-bold">13</strong> Retweet</span>
+          <span><strong className="text-text font-bold">05</strong> Quote tweets</span>
+          <span><strong className="text-text font-bold">63</strong> Likes</span>
         </div>
       </motion.div>
     </div>
@@ -46,8 +62,8 @@ function ComplaintCard() {
 function ReplyCard() {
   return (
     <div
-      className="absolute right-0 bottom-0 hidden w-72 lg:block"
-      style={{ transform: "perspective(900px) rotateY(-16deg) rotateX(-4deg)" }}
+      className="absolute right-0 bottom-0 hidden w-[340px] lg:block select-none"
+      style={{ transform: "perspective(1000px) rotateY(-18deg) rotateX(-6deg)" }}
     >
       <motion.div
         animate={{ y: [0, 12, 0] }}
@@ -57,28 +73,45 @@ function ReplyCard() {
           ease: "easeInOut",
           delay: 0.6,
         }}
-        className="rounded-xl border border-accent/40 bg-surface p-4 shadow-2xl glow-accent"
+        className="rounded-xl border border-border bg-surface p-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/20 text-accent">
-            <Check size={16} />
+        <div className="flex items-start gap-3">
+          <img 
+            src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=80&h=80&q=80" 
+            className="h-9 w-9 rounded-full object-cover shrink-0" 
+            alt="avatar" 
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1 justify-between">
+              <div className="flex items-center gap-1">
+                <span className="truncate text-sm font-bold text-text">Solo Studio</span>
+                <VerifiedBadge />
+              </div>
+              <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success shrink-0">
+                280 chars
+              </span>
+            </div>
+            <p className="truncate text-xs text-muted">@solostudio</p>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-text">Draft ready</p>
-            <p className="text-xs text-muted">Undercut · Gate 2</p>
+          <div className="text-muted shrink-0 opacity-80 mt-0.5">
+            <XIcon style={{ fontSize: 13 }} />
           </div>
-          <span className="ml-auto rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
-            280 chars
-          </span>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-text">
+
+        <p className="mt-3 text-sm leading-relaxed text-text/90">
           Sorry to hear the drafts keep disappearing — that&apos;s rough. I made
-          <span className="text-accent"> MyApp</span> exactly for this: autosave
+          <span className="text-accent font-semibold"> @MyApp</span> exactly for this: autosave
           every keystroke, offline-first. Free trial if you want to test it 👇
         </p>
-        <div className="mt-3 flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white">
-            <Send size={12} /> Reply on X
+
+        <p className="mt-3 text-xs text-muted">
+          10:23 PM · Jul 12, 2026
+        </p>
+
+        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between">
+          <span className="text-[10px] text-accent font-semibold uppercase tracking-wider">Draft Suggestion</span>
+          <div className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-accent/20 cursor-pointer hover:brightness-105 active:scale-95 transition-all">
+            <Send size={11} /> Reply on X
           </div>
         </div>
       </motion.div>
@@ -95,7 +128,6 @@ export function Hero() {
       className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28"
     >
       <div className="pointer-events-none absolute inset-0 bg-grid" />
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[680px] -translate-x-1/2 rounded-full bg-accent/15 blur-[120px]" />
 
       <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -103,12 +135,15 @@ export function Hero() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex justify-center"
+            className="flex items-center justify-center gap-5 text-xs text-muted"
           >
-            <Badge className="border-accent/30 bg-accent/10 text-accent">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Built for HackOnVibe 2026
-            </Badge>
+            <span className="inline-flex items-center gap-1.5">
+              <XIcon style={{ fontSize: 14 }} /> X / Twitter
+            </span>
+            <span className="h-1 w-1 rounded-full bg-border" />
+            <span className="inline-flex items-center gap-1.5">
+              <InstagramIcon style={{ fontSize: 14 }} /> Instagram
+            </span>
           </motion.div>
 
           <motion.h1
@@ -118,7 +153,7 @@ export function Hero() {
             className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-text sm:text-5xl lg:text-6xl"
           >
             Turn competitor complaints into your{" "}
-            <span className="text-gradient">next customers.</span>
+            <span className="font-serif italic font-normal text-white">next customers.</span>
           </motion.h1>
 
           <motion.p
@@ -142,23 +177,8 @@ export function Hero() {
               <ArrowRight size={18} />
             </Button>
             <p className="text-sm text-muted">
-              3 free replies every week. Forever.
+              5 free replies every week. Forever.
             </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.35 }}
-            className="mt-10 flex items-center justify-center gap-5 text-xs text-muted"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <XIcon style={{ fontSize: 14 }} /> X / Twitter
-            </span>
-            <span className="h-1 w-1 rounded-full bg-border" />
-            <span className="inline-flex items-center gap-1.5">
-              <InstagramIcon style={{ fontSize: 14 }} /> Instagram
-            </span>
           </motion.div>
         </div>
 

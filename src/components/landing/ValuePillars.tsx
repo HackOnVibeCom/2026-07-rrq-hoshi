@@ -3,11 +3,11 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Radar, ShieldCheck, UserCog, Send, LineChart } from "lucide-react";
 
 const PILLARS = [
-  { icon: Radar, label: "Temukan FUD", href: "#features" },
-  { icon: ShieldCheck, label: "Verifikasi AI", href: "#features" },
-  { icon: UserCog, label: "Personalisasi", href: "#features" },
-  { icon: Send, label: "Kirim Sekali Klik", href: "#features" },
-  { icon: LineChart, label: "Lacak Hasil", href: "#features" },
+  { icon: Radar, label: "Find FUD", href: "#features" },
+  { icon: ShieldCheck, label: "AI Verification", href: "#features" },
+  { icon: UserCog, label: "Personalized", href: "#features" },
+  { icon: Send, label: "One-Click Send", href: "#features" },
+  { icon: LineChart, label: "Track Results", href: "#features" },
 ];
 
 export function ValuePillars() {

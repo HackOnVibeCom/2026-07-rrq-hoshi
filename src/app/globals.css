@@ -5,15 +5,16 @@
   --color-surface: #1A1A1F;
   --color-surface-2: #202028;
   --color-border: #2A2A30;
-  --color-accent: #6366F1;
-  --color-accent-hover: #818CF8;
+  --color-accent: #3B82F6;
+  --color-accent-hover: #60A5FA;
   --color-text: #F4F4F5;
   --color-muted: #A1A1AA;
   --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
 
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-plus-jakarta);
+  --font-serif: var(--font-playfair);
 
   --radius-xl: 0.875rem;
 }
@@ -37,7 +38,7 @@ body {
 }
 
 ::selection {
-  background: rgb(99 102 241 / 0.3);
+  background: rgb(59 130 246 / 0.3);
   color: #fff;
 }
 
@@ -56,11 +57,11 @@ body {
 }
 
 .glow-accent {
-  box-shadow: 0 0 30px -4px rgb(99 102 241 / 0.5);
+  box-shadow: 0 0 30px -4px rgb(59 130 246 / 0.5);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #818CF8 0%, #6366F1 50%, #4F46E5 100%);
+  background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #2563EB 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

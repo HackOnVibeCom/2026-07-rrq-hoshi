@@ -1,68 +1,85 @@
+"use client";
+
 import { Container } from "@/components/ui/Container";
 import { Reveal } from "@/components/ui/Reveal";
-import { UserPlus, Target, Filter, Sparkles, Send } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { useAuthModal } from "@/components/AuthModalProvider";
+import { UserCheck, Radar, Zap, Brain, Rocket } from "lucide-react";
 
-const STEPS = [
+const ITEMS = [
   {
-    icon: UserPlus,
-    title: "Set up your profile",
-    desc: "Isi info produk sekali. AI butuh ini untuk balasan yang personal.",
+    icon: UserCheck,
+    title: "Setup Profile Info",
   },
   {
-    icon: Target,
-    title: "Add competitors",
-    desc: "X pakai keyword, Instagram pakai username. Kami yang pantau.",
+    icon: Radar,
+    title: "Track Competitors",
   },
   {
-    icon: Filter,
-    title: "AI filters the noise",
-    desc: "Gate 1 menyaring ribuan postingan, hanya keluhan relevan yang lolos.",
+    icon: Zap,
+    title: "Filter Out Noise",
   },
   {
-    icon: Sparkles,
-    title: "Get ready-to-send replies",
-    desc: "Gate 2 menyusun draf balasan kontekstual siap pakai.",
+    icon: Brain,
+    title: "AI Drafts Replies",
   },
   {
-    icon: Send,
-    title: "Click & reply",
-    desc: "Balasan terkirim dari akunmu sendiri. Bukan bot. Aman dari shadowban.",
+    icon: Rocket,
+    title: "One-Click Send",
   },
 ];
 
 export function HowItWorks() {
+  const { open } = useAuthModal();
+
   return (
-    <Container id="how" className="py-20 sm:py-28">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="text-base font-medium uppercase tracking-wider text-accent">
-          How it works
-        </p>
-        <h2 className="mt-3 text-3xl font-bold text-text sm:text-4xl">
-          From setup to sent in 5 steps
+    <Container id="how" className="py-24 sm:py-32">
+      <Reveal className="mx-auto max-w-3xl text-center">
+        <h2 className="text-3xl font-bold text-text sm:text-4xl lg:text-5xl leading-tight">
+          Undercut helps you at{" "}
+          <span className="font-serif italic font-normal text-white">every stage.</span>
         </h2>
       </Reveal>
 
-      <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-        {STEPS.map((step, i) => (
-          <Reveal key={step.title} delay={i * 0.08}>
-            <div className="group relative h-full rounded-2xl border border-border bg-surface p-6 transition-colors hover:border-accent/40">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                <step.icon size={20} />
+      <div className="mt-14 overflow-hidden rounded-3xl border border-border bg-surface/20">
+        {/* Top Row: 3 items */}
+        <div className="grid grid-cols-1 border-b border-border md:grid-cols-3">
+          {ITEMS.slice(0, 3).map((item) => (
+            <div 
+              key={item.title} 
+              className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center border-b border-border last:border-b-0 md:border-b-0 md:border-r border-border"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-b from-[#3A3A40] via-[#222228] to-[#121215] border border-border border-t-white/15 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_6px_15px_rgba(0,0,0,0.6)] text-white">
+                <item.icon size={24} />
               </div>
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-xs font-bold text-muted">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-base font-semibold text-text">
-                  {step.title}
-                </h3>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted">
-                {step.desc}
-              </p>
+              <h3 className="mt-6 text-xl font-extrabold text-text tracking-tight">{item.title}</h3>
             </div>
-          </Reveal>
-        ))}
+          ))}
+        </div>
+
+        {/* Bottom Row: 2 items */}
+        <div className="grid grid-cols-1 md:grid-cols-2">
+          {ITEMS.slice(3, 5).map((item) => (
+            <div 
+              key={item.title} 
+              className="flex min-h-[220px] flex-col items-center justify-center p-8 text-center border-b border-border last:border-b-0 md:border-b-0 md:border-r border-border last:border-r-0"
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-b from-[#3A3A40] via-[#222228] to-[#121215] border border-border border-t-white/15 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),_0_6px_15px_rgba(0,0,0,0.6)] text-white">
+                <item.icon size={24} />
+              </div>
+              <h3 className="mt-6 text-xl font-extrabold text-text tracking-tight">{item.title}</h3>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-12 flex flex-col items-center justify-center">
+        <Button size="lg" onClick={open}>
+          Start Free
+        </Button>
+        <p className="mt-3 text-sm text-muted font-medium">
+          Forever.
+        </p>
       </div>
     </Container>
   );

@@ -20,8 +20,8 @@ export function LowBalanceBanner({
     >
       <AlertTriangle size={18} className="shrink-0 text-warning" />
       <p className="flex-1 text-sm text-text">
-        Saldo habis. Top up <span className="font-semibold">$2</span> untuk
-        lanjut memproses lead.
+        Balance exhausted. Top up <span className="font-semibold">$2</span> to
+        continue processing leads.
       </p>
       <Button size="sm" variant="primary" onClick={onTopUp}>
         Top up →

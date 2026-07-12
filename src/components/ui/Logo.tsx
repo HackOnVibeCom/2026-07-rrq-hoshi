@@ -10,7 +10,7 @@ export function Logo({
   return (
     <div className="flex items-center gap-2.5">
       <Image
-        src="/LogoUndercut.png"
+        src="/LogoUndercut.svg"
         alt="Undercut logo"
         width={size}
         height={size}

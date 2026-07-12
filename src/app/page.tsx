@@ -2,7 +2,6 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
 import { ProblemAgitation } from "@/components/landing/ProblemAgitation";
 import { HowItWorks } from "@/components/landing/HowItWorks";
-import { ValuePillars } from "@/components/landing/ValuePillars";
 import { FeatureDeepDive } from "@/components/landing/FeatureDeepDive";
 import { LiveDemoWidget } from "@/components/landing/LiveDemoWidget";
 import { Pricing } from "@/components/landing/Pricing";
@@ -18,7 +17,6 @@ export default function Home() {
         <Hero />
         <ProblemAgitation />
         <HowItWorks />
-        <ValuePillars />
         <FeatureDeepDive />
         <LiveDemoWidget />
         <Pricing />

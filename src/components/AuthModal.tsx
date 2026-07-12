@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useAuthModal } from "@/components/AuthModalProvider";
+import { createClient } from "@/utils/supabase/client";
 
 function GoogleIcon() {
   return (
@@ -31,6 +32,7 @@ function GoogleIcon() {
 
 export function AuthModal() {
   const { isOpen, close } = useAuthModal();
+  const supabase = createClient();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -44,6 +46,21 @@ export function AuthModal() {
       document.body.style.overflow = "";
     };
   }, [isOpen, close]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/api/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Google sign in failed:", err.message || err);
+      alert("Sign in failed: " + (err.message || err));
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -83,14 +100,13 @@ export function AuthModal() {
                 Sign in to Undercut
               </h2>
               <p className="mt-2 text-sm text-muted">
-                Get <span className="font-semibold text-text">$2.00 free credits</span>{" "}
-                and <span className="font-semibold text-text">3 free replies</span>{" "}
+                Get <span className="font-semibold text-text">5 free replies</span>{" "}
                 every week — no card needed.
               </p>
             </div>
 
             <button
-              onClick={() => alert("TODO: wire Supabase Google OAuth")}
+              onClick={handleGoogleSignIn}
               className="flex w-full items-center justify-center gap-3 rounded-full bg-white px-5 py-3 text-base font-semibold text-gray-900 transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
               <GoogleIcon />

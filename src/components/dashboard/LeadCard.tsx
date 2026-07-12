@@ -199,9 +199,9 @@ export function LeadCard({
             className="relative border-t border-accent/30 bg-accent/5 px-4 py-3"
           >
             <p className="text-xs text-muted">
-              <span className="font-semibold text-accent">Tip:</span> Edit draf
-              sebelum kirim — buat jadi gaya kamu. Tombol &ldquo;Reply&rdquo;
-              akan buka tab baru dengan balasan siap dikirim dari akunmu sendiri.
+              <span className="font-semibold text-accent">Tip:</span> Edit draft
+              before sending — make it your style. The &ldquo;Reply&rdquo; button
+              will open a new tab with the reply ready to be sent from your own account.
             </p>
           </motion.div>
         </AnimatePresence>

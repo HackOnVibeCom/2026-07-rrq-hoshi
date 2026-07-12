@@ -6,45 +6,45 @@ const GROUPS = [
   {
     title: "Monitoring & Scraping",
     items: [
-      "Free-text keyword search untuk X (boolean operator didukung)",
-      "Username tracking untuk Instagram",
-      "Maksimal 5 target aktif per platform",
-      "Polling otomatis tiap 10–15 menit",
-      "Deduplikasi otomatis (tidak ada lead dobel)",
+      "Free-text keyword search for X (boolean operators supported)",
+      "Username tracking for Instagram",
+      "Maximum of 5 active targets per platform",
+      "Auto-polling every 10–15 minutes",
+      "Automated deduplication (no duplicate leads)",
     ],
   },
   {
     title: "AI Pipeline",
     items: [
-      "Gate 1 gratis (relevance & sentiment filter)",
-      "Gate 2 personalisasi penuh berdasarkan profil perusahaan",
-      "Timeout 150 detik per siklus, dijamin tidak menggantung",
-      "Draf balasan disesuaikan panjang platform (280 char X, 500 char IG)",
+      "Free Gate 1 (relevance & sentiment filter)",
+      "Gate 2 full personalization based on app profile",
+      "150-second timeout per cycle, guaranteed no hanging",
+      "Draft replies adjusted for platform limits (280 chars X, 500 chars IG)",
     ],
   },
   {
     title: "Reply & Safety",
     items: [
-      "Semi-auto: klik kirim di X, salin+tempel di Instagram",
-      "Tidak ada bot posting otomatis — 100% human-in-the-loop",
-      "Edit draf sebelum kirim",
+      "Semi-auto: click send on X, copy+paste on Instagram",
+      "No automated posting bots — 100% human-in-the-loop",
+      "Edit drafts before sending",
     ],
   },
   {
     title: "Billing",
     items: [
-      "Bayar per pemakaian, tanpa langganan bulanan",
-      "Top-up nilai bebas mulai $2, atau template cepat",
-      "3 siklus gratis tiap minggu, selamanya",
-      "Riwayat transaksi transparan",
+      "Pay per use, no monthly subscription",
+      "Top-up any amount starting at $2, or use quick templates",
+      "5 free cycles every week, forever",
+      "Transparent transaction history",
     ],
   },
   {
-    title: "Keamanan & Data",
+    title: "Security & Data",
     items: [
-      "Login Google OAuth, tanpa password untuk dikelola",
-      "Row Level Security — data user lain tidak pernah terlihat",
-      "Webhook pembayaran terverifikasi signature + idempotent",
+      "Google OAuth login, no passwords to manage",
+      "Row Level Security — other users' data is never visible",
+      "Payment webhooks verified with signature + idempotency",
     ],
   },
 ];
@@ -52,39 +52,35 @@ const GROUPS = [
 export function FeatureReference() {
   return (
     <Container className="py-20 sm:py-28">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="text-base font-medium uppercase tracking-wider text-accent">
-          Full reference
-        </p>
-        <h2 className="mt-3 text-3xl font-bold text-text sm:text-4xl">
-          All the features you were hoping for
+      <Reveal className="mx-auto max-w-3xl text-center">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+          All the <span className="font-serif italic font-normal">features</span> you were hoping for.
         </h2>
-        <p className="mt-3 text-muted">
-          Everything Undercut does — no docs page needed, it&apos;s all here.
-        </p>
       </Reveal>
 
-      <Reveal delay={0.1} className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {GROUPS.map((group) => (
-          <div
-            key={group.title}
-            className="rounded-2xl border border-border bg-surface p-6"
-          >
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text">
-              {group.title}
-            </h3>
-            <ul className="mt-4 space-y-3">
-              {group.items.map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-muted">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-                    <Check size={13} />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <Reveal delay={0.1} className="mt-12">
+        <div className="flex flex-wrap justify-center gap-6">
+          {GROUPS.map((group) => (
+            <div
+              key={group.title}
+              className="w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] rounded-2xl border border-[#1b1b1f] border-t-white/10 bg-[#111114] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),_0_8px_16px_rgba(0,0,0,0.4)]"
+            >
+              <h3 className="text-sm font-bold uppercase tracking-wider text-text">
+                {group.title}
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {group.items.map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-muted">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
+                      <Check size={13} />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </Reveal>
     </Container>
   );

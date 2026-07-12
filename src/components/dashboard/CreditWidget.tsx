@@ -61,7 +61,7 @@ export function CreditWidget({ onTopUp }: { onTopUp: () => void }) {
         <Sparkles size={14} className="text-warning" />
         <div className="flex flex-col leading-tight">
           <span className="text-xs font-semibold text-text">
-            {status.free_demo_credits_remaining}/3 free
+            {status.free_demo_credits_remaining}/5 free
           </span>
           <span className="text-[10px] text-muted">
             {formatResetLabel(status.free_demo_reset_at)}

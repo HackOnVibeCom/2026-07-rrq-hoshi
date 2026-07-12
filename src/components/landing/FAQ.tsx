@@ -8,44 +8,44 @@ import { Reveal } from "@/components/ui/Reveal";
 
 const FAQS = [
   {
-    q: "Apakah Undercut mem-posting balasan secara otomatis?",
-    a: "Tidak. Anda selalu yang menekan tombol kirim. Kami hanya menyiapkan draf. Tidak ada bot background — semua lewat klik manual dari akun Anda sendiri, jadi risiko shadowban tidak berlaku di sini.",
+    q: "Does Undercut post replies automatically?",
+    a: "No. You are always the one pressing the send button. We only prepare drafts. There are no background bots — everything goes through manual clicks from your own account, so shadowban risks do not apply here.",
   },
   {
-    q: "Apa bedanya input keyword (X) dan username (Instagram)?",
-    a: "Di X, sistem mencari postingan berdasarkan keyword/hashtag bebas yang Anda tentukan. Di Instagram, sistem memantau postingan terbaru dari akun kompetitor via username-nya — karena Instagram tidak mendukung pencarian kata kunci bebas seandal X.",
+    q: "What's the difference between X (Twitter) keywords and Instagram usernames?",
+    a: "On X, the system searches for posts based on free keywords/hashtags that you specify. On Instagram, the system monitors new posts from competitor accounts via their usernames — because Instagram does not support free keyword searches as reliably as X.",
   },
   {
-    q: "Apakah ada biaya jika postingan tidak relevan?",
-    a: "Tidak. Gate 1 (filter relevansi) 100% gratis. Biaya $0.10 hanya dipotong jika Gate 2 berhasil membuat draf balasan.",
+    q: "Is there a charge if a post is not relevant?",
+    a: "No. Gate 1 (relevance filter) is 100% free. The $0.10 cost is only deducted if Gate 2 successfully generates a reply draft.",
   },
   {
-    q: "Bagaimana urutan pemakaian saldo — demo gratis dulu atau kredit dulu?",
-    a: "Demo gratis mingguan dipakai duluan secara otomatis. Kredit berbayar baru dipotong setelah demo minggu itu habis. Setiap akun dapat 3 siklus gratis per minggu yang reset otomatis tiap 7 hari.",
+    q: "What is the order of credit usage — free demo first or paid credit first?",
+    a: "Weekly free demo credits are used first automatically. Paid credits are only deducted after that week's demo credit is exhausted. Every account gets 5 free cycles per week, which reset automatically every 7 days.",
   },
   {
-    q: "Metode pembayaran apa yang tersedia?",
-    a: "GoPay, QRIS, Virtual Account semua bank besar, dan kartu kredit/debit — semua via Midtrans. Saldo tidak ada kadaluarsa dan berlaku selamanya.",
+    q: "What payment methods are available?",
+    a: "GoPay, QRIS, Virtual Account from all major banks, and credit/debit cards — all via Midtrans. Balance never expires and is valid forever.",
   },
   {
-    q: "Berapa lama saldo kredit berlaku?",
-    a: "Tidak ada kadaluarsa. Saldo kredit berlaku selamanya. Hanya kuota demo mingguan yang reset tiap 7 hari.",
+    q: "How long is the credit balance valid?",
+    a: "There is no expiration. Credit balance is valid forever. Only the weekly demo quota resets every 7 days.",
   },
   {
-    q: "Apakah ada batasan jumlah kompetitor yang bisa dipantau?",
-    a: "Di MVP, maksimal 5 target aktif per platform (5 keyword X + 5 username Instagram). Cukup untuk fokus dan efektif.",
+    q: "Is there a limit to the number of competitors I can monitor?",
+    a: "In the MVP, a maximum of 5 active targets per platform (5 X keywords + 5 Instagram usernames). This is enough to keep you focused and effective.",
   },
   {
-    q: "Kenapa harus isi profil aplikasi sebelum mulai?",
-    a: "Karena Gate 2 butuh konteks nyata — aplikasi, target audiens, tone — supaya draf balasannya tidak generik, melainkan disesuaikan dengan nilai keunggulan aplikasi Anda. Tanpa ini, hasilnya cuma template kosong.",
+    q: "Why do I need to fill out my app profile before starting?",
+    a: "Because Gate 2 needs real context — app name, target audience, tone — so that draft replies are not generic, but tailored to your app's unique value proposition. Without this, you'd just get empty templates.",
   },
   {
-    q: "Apakah aman dari shadowban?",
-    a: "Ya. Karena tidak ada posting otomatis (semua lewat klik manual dari akun Anda sendiri), risiko yang biasanya datang dari bot spam tidak berlaku di sini.",
+    q: "Is it safe from shadowbans?",
+    a: "Yes. Since there is no automated posting (everything goes through manual clicks from your own account), the risk that usually comes from spam bots does not apply here.",
   },
   {
-    q: "Data saya aman?",
-    a: "Row Level Security aktif di semua tabel — secara teknis, user lain tidak bisa query data Anda sama sekali, bukan cuma disembunyikan di UI. Semua dienkripsi di Postgres Supabase.",
+    q: "Is my data secure?",
+    a: "Row Level Security is active on all tables — technically, other users cannot query your data at all, not just hidden in the UI. Everything is encrypted in Supabase Postgres.",
   },
 ];
 
@@ -55,11 +55,8 @@ export function FAQ() {
   return (
     <Container id="faq" className="py-20 sm:py-28">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <p className="text-base font-medium uppercase tracking-wider text-accent">
-          FAQ
-        </p>
-        <h2 className="mt-3 text-3xl font-bold text-text sm:text-4xl">
-          Questions? Answered.
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
+          Questions? <span className="font-serif italic font-normal">Answered.</span>
         </h2>
       </Reveal>
 

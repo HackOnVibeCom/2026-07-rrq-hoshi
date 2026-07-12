@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { useAuthModal } from "@/components/AuthModalProvider";
 
 const NAV_LINKS = [
-  { label: "How it Works", href: "#how" },
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How it Works", href: "/#how" },
+  { label: "Features", href: "/#features" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 export function Navbar() {
@@ -38,7 +38,7 @@ export function Navbar() {
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
-        <a href="#top" aria-label="Undercut home" className="shrink-0">
+        <a href="/" aria-label="Undercut home" className="shrink-0">
           <Logo />
         </a>
 
