@@ -34,7 +34,7 @@ const CARDS = [
   },
 ];
 
-type Segment = string | { serif: true; text: string };
+type Segment = string | { serif: boolean; text: string };
 
 function CardDescription({ segments }: { segments: Segment[] }) {
   return (
