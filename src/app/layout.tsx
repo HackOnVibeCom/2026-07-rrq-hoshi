@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "Undercut — Turn competitor complaints into your next customers",
   description:
     "Undercut watches X and Instagram for people complaining about your competitors — AI drafts the reply, you just hit send.",
+  icons: {
+    icon: "/icon.svg",
+  },
   openGraph: {
     title: "Undercut — Turn competitor complaints into your next customers",
     description:
