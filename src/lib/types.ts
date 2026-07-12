@@ -11,6 +11,7 @@ export interface Differentiators {
   differentiator_1: string;
   differentiator_2: string;
   differentiator_3: string;
+  [key: string]: string | undefined;
 }
 
 export interface Profile {
