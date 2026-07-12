@@ -61,7 +61,10 @@ export async function POST(request: Request) {
     }
 
     // 6. Create Stripe Checkout Session
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    // Dynamically retrieve origin to handle Vercel deployment and local dev correctly
+    const requestUrl = new URL(request.url)
+    const origin = request.headers.get('origin') || requestUrl.origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -77,8 +80,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'payment',
-      success_url: `${appUrl}/dashboard/x?payment=success&order_id=${gatewayOrderId}`,
-      cancel_url: `${appUrl}/dashboard/x?payment=cancelled`,
+      success_url: `${origin}/dashboard/x?payment=success&order_id=${gatewayOrderId}`,
+      cancel_url: `${origin}/dashboard/x?payment=cancelled`,
       customer_email: user.email,
       metadata: {
         userId: user.id,
