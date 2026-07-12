@@ -6,6 +6,8 @@ import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { useAuthModal } from "@/components/AuthModalProvider";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 const NAV_LINKS = [
   { label: "How it Works", href: "/#how" },
@@ -15,9 +17,13 @@ const NAV_LINKS = [
 ];
 
 export function Navbar() {
+  const router = useRouter();
+  const supabase = createClient();
+  const { open } = useAuthModal();
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { open } = useAuthModal();
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -25,6 +31,22 @@ export function Navbar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   return (
     <motion.header
@@ -55,12 +77,24 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="sm" onClick={open}>
-            Log In
-          </Button>
-          <Button variant="primary" size="sm" onClick={open}>
-            Start Free
-          </Button>
+          {user ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => router.push("/dashboard/x")}
+            >
+              Dashboard
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" onClick={open}>
+                Log In
+              </Button>
+              <Button variant="primary" size="sm" onClick={open}>
+                Start Free
+              </Button>
+            </>
+          )}
         </div>
 
         <button
@@ -115,24 +149,38 @@ export function Navbar() {
                 </motion.a>
               ))}
               <div className="mt-6 flex flex-col gap-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    open();
-                  }}
-                >
-                  Log In
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    open();
-                  }}
-                >
-                  Start Free — No Card Needed
-                </Button>
+                {user ? (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      router.push("/dashboard/x");
+                    }}
+                  >
+                    Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        open();
+                      }}
+                    >
+                      Log In
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        open();
+                      }}
+                    >
+                      Start Free — No Card Needed
+                    </Button>
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>
