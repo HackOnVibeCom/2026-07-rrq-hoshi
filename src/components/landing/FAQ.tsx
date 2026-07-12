@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "What payment methods are available?",
-    a: "GoPay, QRIS, Virtual Account from all major banks, and credit/debit cards — all via Midtrans. Balance never expires and is valid forever.",
+    a: "Credit/debit cards, Apple Pay, Google Pay, and Link — all processed securely via Stripe. Balance never expires and is valid forever.",
   },
   {
     q: "How long is the credit balance valid?",

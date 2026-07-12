@@ -66,10 +66,13 @@ export default function BillingView() {
     }
     setSubmitting(true);
     try {
-      await createTopUp(customAmount);
+      const res = await createTopUp(customAmount);
       toast.success(
-        `Top up $${customAmount.toFixed(2)} initiated. Redirecting to Midtrans snap…`
+        `Top up $${customAmount.toFixed(2)} initiated. Redirecting to Stripe…`
       );
+      setTimeout(() => {
+        window.location.href = res.redirectUrl;
+      }, 1000);
     } catch {
       toast.error("Failed to start top-up");
     } finally {

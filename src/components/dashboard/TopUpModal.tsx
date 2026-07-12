@@ -41,10 +41,11 @@ export function TopUpModal({
     }
     setLoading(true);
     try {
-      await createTopUp(amount);
-      // Real backend integration: redirect to Midtrans Snap (window.snap.pay(token))
-      toast.success(`Top up $${amount.toFixed(2)} initiated. Redirecting to Midtrans…`);
-      onClose();
+      const res = await createTopUp(amount);
+      toast.success(`Top up $${amount.toFixed(2)} initiated. Redirecting to Stripe…`);
+      setTimeout(() => {
+        window.location.href = res.redirectUrl;
+      }, 1000);
     } catch {
       toast.error("Failed to start top-up. Try again.");
     } finally {

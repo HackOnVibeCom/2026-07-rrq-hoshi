@@ -258,7 +258,7 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
   {
     id: "tx-1",
     profile_id: "mock-profile-1",
-    gateway: "midtrans",
+    gateway: "stripe",
     gateway_order_id: "undercut-1083745",
     top_up_amount_usd: 2.0,
     credit_granted_usd: 2.0,

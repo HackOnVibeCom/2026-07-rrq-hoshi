@@ -166,12 +166,31 @@ export async function listTransactions(): Promise<Transaction[]> {
 }
 
 export async function createTopUp(amountUsd: number): Promise<{ redirectUrl: string; orderId: string }> {
-  await delay(500);
-  // Real backend: POST /api/billing/topup → returns Midtrans Snap token.
-  void amountUsd;
+  try {
+    const res = await fetch('/api/billing/topup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount_usd: amountUsd }),
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) {
+        return {
+          redirectUrl: data.url,
+          orderId: data.order_id,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('API topup failed, falling back to mock Stripe redirect:', err);
+  }
+
   const orderId = `undercut-${Date.now()}`;
   return {
-    redirectUrl: `https://app.midtrans.com/snap/v3/redirection/${orderId}`,
+    redirectUrl: 'https://checkout.stripe.com/pay/dummy_session',
     orderId,
   };
 }

@@ -88,7 +88,7 @@ export type TransactionStatus = "PENDING" | "SETTLED" | "FAILED" | "EXPIRED";
 export interface Transaction {
   id: string;
   profile_id: string;
-  gateway: "midtrans" | "xendit";
+  gateway: "stripe" | "midtrans" | "xendit";
   gateway_order_id: string;
   top_up_amount_usd: number;
   credit_granted_usd: number;
